@@ -30,7 +30,7 @@ data:
   maps_number: 700                        # Number of building maps; the range is [1, 700]
   transmitters_number: 80                 # Number of transmitters in one map: for modes providing sparse IRT4 samples, the value range is [1, 2]; otherwise, the value range is [1, 80].
 
-  threshold: 0.2                          # Pathloss threshold; the range is [0, 1]
+  threshold: 0.2                          # Pathloss threshold; the range is [0, 1)
 
   img_size:                               # Image size 
     - 256

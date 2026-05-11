@@ -1,5 +1,6 @@
 from pathlib import Path
 import numpy as np
+import torch
 from torch.utils.data import Dataset
 from torchvision.io import read_image, ImageReadMode
 
@@ -14,13 +15,13 @@ class RadioMapDataset(Dataset):
         map_idx = idx / self.config.transmitters_number
         tx_idx = idx % self.config.transmitters_number
         
-        buildings_img = self._load_buildings(map_idx)
-        tx_img = self._load_transmitters(map_idx, tx_idx)
+        buildings = self._load_buildings(map_idx)
+        tx = self._load_transmitters(map_idx, tx_idx)
         
-        gain_img = self._load_gain(map_idx, tx_idx)
-        gain_img = self._apply_threshold(gain_img)
+        gain = self._load_gain(map_idx, tx_idx)
+        gain = self._apply_threshold(gain)
         
-        inputs = [buildings_img, tx_img]
+        inputs = [buildings, tx]
         if self.cars_input:
             cars_img = self._load_cars(map_idx)
             inputs.append(cars_img)
@@ -83,6 +84,10 @@ class RadioMapDataset(Dataset):
             dpm = read_image(str(pathDPM), ImageReadMode.GRAY).float() / 255.0
             irt2 = read_image(str(pathIRT2), ImageReadMode.GRAY).float() / 255.0
             return self.config.IRT2_weight * irt2 + (1-self.config.IRT2_weight) * dpm
+    
+    def _apply_threshold(self, gain):
+        thr = self.config.threshold
+        return (torch.clip(gain, min=thr) - thr) / (1 - thr)
 
     def _generate_random_samples(self, gain_img):
         # 对应 RadioUNet_s 中的随机采样逻辑

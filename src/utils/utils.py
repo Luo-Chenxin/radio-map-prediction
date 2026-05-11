@@ -40,7 +40,7 @@ class _DataConfig(BaseModel):
                 raise ValueError(f"Range is [1, 80]")
         return self
 
-    threshold: float = Field(ge=0.0, le=1.0, description="Range is [0, 1]")
+    threshold: float = Field(ge=0.0, lt=1.0, description="Range is [0, 1]")
     img_size: _ImgSize
     batch_size: int = Field(gt=0, description="Batch size > 0")
     rand_seed: int = Field(ge=0, description="Random seed >= 0")

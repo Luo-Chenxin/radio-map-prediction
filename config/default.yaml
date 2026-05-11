@@ -7,6 +7,8 @@ data:
   DPM_cars_dir: "gain/carsDPM"            # Dataset DPM simulation directory, and it simulated with cars
   IRT2_dir: "gain/IRT2"                   # Dataset IRT2 simulation directory, and it simulated without cars
   IRT2_cars_dir: "gain/carsIRT2"          # Dataset IRT2 simulation directory, and it simulated with cars
+  IRT4_dir: "gain/IRT4"                   # Dataset IRT4 simulation directory, and it simulated without cars
+  IRT4_cars_dir: "gain/carsIRT4"          # Dataset IRT4 simulation directory, and it simulated with cars
   buildings_complete_dir: "png/buildings_complete"  # Dataset building maps directory, and it includes all buildings
   buildings_missing_dir: "png/buildings_missing"    # Dataset building maps directory, and it misses some buildings
   antennas_dir: "png/antennas"            # Dataset antenna maps directory

@@ -60,14 +60,17 @@ class RadioMapDataset(Dataset):
         path = path / name
         return read_image(str(path), ImageReadMode.RGB).float() / 255.0
     
-    def _load_transimtters(self, map_idx, tx_idx):
+    def _load_transmitters(self, map_idx, tx_idx):
         path = Path(self.config.root_dir) / self.config.antennas_dir / f"{map_idx}_{tx_idx}.png"
         return read_image(str(path), ImageReadMode.RGB).float() / 255.0
 
 
     def _load_gain(self, map_idx, tx_idx):
-        # 包含原代码中 simulation == 'rand' (混合 DPM 和 IRT2) 的逻辑处理
-        pass
+        path = Path(self.config.root_dir)
+        name = f"{map_idx}_{tx_idx}.png"
+
+        pathDPM = path / Path(self.config.DPM_cars_dir) if self.config.cars_simulation else Path(self.config.DPM_dir)
+        pathIRT2 = path / Path(self.config.IRT2_cars_dir) if self.config.cars_simulation else Path(self.config.IRT2_dir)
 
     def _generate_random_samples(self, gain_img):
         # 对应 RadioUNet_s 中的随机采样逻辑

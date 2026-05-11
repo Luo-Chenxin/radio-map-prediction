@@ -13,6 +13,8 @@ class _DataConfig(BaseModel):
     DPM_cars_dir: str
     IRT2_dir: str
     IRT2_cars_dir: str
+    IRT4_dir: str
+    IRT4_cars_dir: str
     buildings_complete_dir: str
     buildings_missing_dir: str
     antennas_dir: str

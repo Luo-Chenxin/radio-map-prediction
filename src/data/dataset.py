@@ -69,8 +69,12 @@ class RadioMapDataset(Dataset):
         path = Path(self.config.root_dir)
         name = f"{map_idx}_{tx_idx}.png"
 
-        pathDPM = path / Path(self.config.DPM_cars_dir) if self.config.cars_simulation else Path(self.config.DPM_dir)
-        pathIRT2 = path / Path(self.config.IRT2_cars_dir) if self.config.cars_simulation else Path(self.config.IRT2_dir)
+        pathDPM = path / Path(self.config.DPM_cars_dir) if self.config.cars_simulation else Path(self.config.DPM_dir) / name
+        pathIRT2 = path / Path(self.config.IRT2_cars_dir) if self.config.cars_simulation else Path(self.config.IRT2_dir) / name
+        pathIRT4 = path / Path(self.config.IRT4_cars_dir) if self.config.cars_simulation else Path(self.config.IRT4_dir) / name
+
+        if self.config.sparse_IRT4:
+            
 
     def _generate_random_samples(self, gain_img):
         # 对应 RadioUNet_s 中的随机采样逻辑

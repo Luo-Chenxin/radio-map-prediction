@@ -25,7 +25,7 @@ class _DataConfig(BaseModel):
     city_map: str
     missing: int = Field(ge=1, le=4, description="Range is [1, 4]")
     sparse_IRT4: bool
-    samples_input: bool
+    samples_number: int = Field(ge=0, description="Inputing samples number needs to be greater than or equal to 0")
     cars_input: bool
     cars_simulation: bool
     maps_number: int = Field(ge=1, le=700, description="Range is [1, 700]")

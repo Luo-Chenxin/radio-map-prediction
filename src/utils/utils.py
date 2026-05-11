@@ -4,11 +4,6 @@ from typing import Annotated, Tuple
 from typing_extensions import Self
 import sys
 
-_CityMapIndexes = Tuple[
-    Annotated[int, Field(ge=0, lt=700)],
-    Annotated[int, Field(gt=0, le=700)]
-]
-
 _ImgSize = Tuple[int, int]
 
 # Define the configuration template (specifying what fields must be included and their types).
@@ -20,6 +15,8 @@ class _DataConfig(BaseModel):
     IRT2_cars_dir: str
     buildings_complete_dir: str
     buildings_missing_dir: str
+    antennas_dir: str
+    cars_dir: str
 
     simulation: str
     IRT2_weight: float = Field(gt=0.0, lt=1.0, description="Range is (0, 1)")
@@ -29,15 +26,7 @@ class _DataConfig(BaseModel):
     samples_input: bool
     cars_input: bool
     cars_simulation: bool
-
-    city_map_inds: _CityMapIndexes
-    @model_validator(mode='after')
-    def _check_city_map_inds(self) -> Self:
-        start, end = self.city_map_inds
-        if start >= end:
-            raise ValueError(f"The start index must be smaller than the end index")
-        return self
-    
+    maps_number: int = Field(ge=1, le=700, description="Range is [1, 700]")
     transmitters_number: int
     @model_validator(mode='after')
     def _check_transmitters_number(self) -> Self:

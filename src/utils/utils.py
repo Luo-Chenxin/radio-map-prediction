@@ -27,20 +27,20 @@ class _DataConfig(BaseModel):
     sparse_IRT4_number: int = Field(ge=0, description="The number of IRT4 points needs to be greater than or equal to 0")
     @model_validator(mode='after')
     def _check_sparse_IRT4_number(self) -> Self:
-        total_data_size = self.transmitters_number * self.maps_number
-        if not (self.sparse_IRT4_number <= total_data_size):
-            raise ValueError(f"The number of sparse IRT4 points needs to be less than or equal to total data size {total_data_size}")
+        total_img_size = self.img_size[0] * self.img_size[1]
+        if not (self.sparse_IRT4_number <= total_img_size):
+            raise ValueError(f"The number of sparse IRT4 points needs to be less than or equal to total image size {total_img_size}")
         return self
     samples_number: int = Field(ge=0, description="Inputing samples number needs to be greater than or equal to 0")
     @model_validator(mode='after')
     def _check_samples_number(self) -> Self:
-        total_data_size = self.transmitters_number * self.maps_number
+        total_img_size = self.img_size[0] * self.img_size[1]
         if self.sparse_IRT4_number > 0:
             if not (self.samples_number <= self.sparse_IRT4_number):
-                raise ValueError(f"The number of sparse IRT4 points needs to be less than or equal to sparse_IRT4_number {self.sparse_IRT4_number}")
+                raise ValueError(f"Inputing samples number needs to be less than or equal to sparse_IRT4_number {self.sparse_IRT4_number}")
         else:
-            if not (self.samples_number <= total_data_size):
-                raise ValueError(f"Inputing samples number needs to be less than or equal to total data size {total_data_size}")
+            if not (self.samples_number <= total_img_size):
+                raise ValueError(f"Inputing samples number needs to be less than or equal to total image size {total_img_size}")
         return self
     cars_input: bool
     cars_simulation: bool

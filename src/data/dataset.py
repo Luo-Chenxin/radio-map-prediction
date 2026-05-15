@@ -26,12 +26,14 @@ class RadioMapDataset(Dataset):
         if self.config.sparse_IRT4_number > 0:
             # TODO
 
+        if self.config.cars_input:
+            cars = self._load_cars(map_idx)
+            inputs.append(cars)
+
+        #--------------------------
+
         if self.config.samples_number > 0:
             samples = self._generate_random_samples(gain)
-
-        if self.config.cars_input:
-            cars_img = self._load_cars(map_idx)
-            inputs.append(cars_img)
         
         if self.mode == 'sparse_random':
             # samples_img = self._generate_random_samples(gain_img)
@@ -66,6 +68,10 @@ class RadioMapDataset(Dataset):
             path = path / f"{self.config.buildings_missing_dir}{self.config.missing}" / str(self.config.version)
         
         path = path / name
+        return read_image(str(path), ImageReadMode.RGB).float() / 255.0
+    
+    def _load_cars(self, map_idx):
+        path = Path(self.config.root_dir) / self.config.cars_dir / f"{str(map_idx)}.png"
         return read_image(str(path), ImageReadMode.RGB).float() / 255.0
     
     def _load_transmitters(self, map_idx, tx_idx):

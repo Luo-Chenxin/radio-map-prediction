@@ -16,18 +16,25 @@ class RadioMapDataset(Dataset):
         tx_idx = idx % self.config.transmitters_number
         
         buildings = self._load_buildings(map_idx)
-        tx = self._load_transmitters(map_idx, tx_idx)
+        transmitters = self._load_transmitters(map_idx, tx_idx)
         
         gain = self._load_gain(map_idx, tx_idx)
         gain = self._apply_threshold(gain)
         
-        inputs = [buildings, tx]
-        if self.cars_input:
+        inputs = [buildings, transmitters]
+
+        if self.config.sparse_IRT4_number > 0:
+            # TODO
+
+        if self.config.samples_number > 0:
+            samples = self._generate_random_samples(gain)
+
+        if self.config.cars_input:
             cars_img = self._load_cars(map_idx)
             inputs.append(cars_img)
         
         if self.mode == 'sparse_random':
-            samples_img = self._generate_random_samples(gain_img)
+            # samples_img = self._generate_random_samples(gain_img)
             inputs.append(samples_img)
         elif self.mode == 'sparse_fixed':
             samples_img, mask_img = self._generate_fixed_samples(gain_img)
@@ -74,7 +81,7 @@ class RadioMapDataset(Dataset):
         pathIRT2 = path / Path(self.config.IRT2_cars_dir) if self.config.cars_simulation else Path(self.config.IRT2_dir) / name
         pathIRT4 = path / Path(self.config.IRT4_cars_dir) if self.config.cars_simulation else Path(self.config.IRT4_dir) / name
 
-        if self.config.sparse_IRT4:
+        if self.config.sparse_IRT4_number > 0:
             return read_image(str(pathIRT4), ImageReadMode.GRAY).float() / 255.0
         elif self.config.simulation == 'DPM':
             return read_image(str(pathDPM), ImageReadMode.GRAY).float() / 255.0

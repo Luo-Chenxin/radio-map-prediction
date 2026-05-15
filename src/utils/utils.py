@@ -24,7 +24,7 @@ class _DataConfig(BaseModel):
     IRT2_weight: float = Field(gt=0.0, lt=1.0, description="Range is (0, 1)")
     city_map: str
     missing: int = Field(ge=1, le=4, description="Range is [1, 4]")
-    sparse_IRT4: bool
+    sparse_IRT4_number: int = Field(ge=0, description="The number of IRT4 points needs to be greater than or equal to 0")
     samples_number: int = Field(ge=0, description="Inputing samples number needs to be greater than or equal to 0")
     cars_input: bool
     cars_simulation: bool
@@ -32,7 +32,7 @@ class _DataConfig(BaseModel):
     transmitters_number: int
     @model_validator(mode='after')
     def _check_transmitters_number(self) -> Self:
-        if self.sparse_IRT4:
+        if self.sparse_IRT4_number > 0:
             if not (1 <= self.transmitters_number <= 2):
                 raise ValueError(f"Range is [1, 2]")
         else:

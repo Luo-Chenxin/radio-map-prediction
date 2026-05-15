@@ -18,12 +18,12 @@ data:
   IRT2_weight: 0.5                        # When using rand mode, set the weight of IRT2 mode, with a range of (0, 1).
   city_map: "complete"                    # City map type: complete, missing, rand. Use the full city, or input map with missing buildings. Rand means that there is a random number of missing buildings.
   missing: 1                              # This setting enable when the city_map is missing and indicates the number of missing buildings; the range is [1, 4].
-  sparse_IRT4: false                      # Using only sparse IRT4 samples or not. If it is true: 
+  sparse_IRT4_number: 0                   # The number of IRT4 points; the range is [0, inf). If it > 0: 
                                           # The model can only see a few fine sparse points on the map
                                           # The dataloader will output a mask matrix to achieve this effect during subsequent training.
                                           # Simulation uses IRT4.
                                           # Transmitters number is in range [1, 2].
-  samples_number: 0                       # If it > 0, some samples with simulation values will input; the range is [0, inf]
+  samples_number: 0                       # If it > 0, some samples with simulation values will input; the range is [0, inf)
   cars_input: false                       # Cars input or not
   cars_simulation: false                  # Cars were used in the simulation or not
   

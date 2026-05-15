@@ -25,7 +25,23 @@ class _DataConfig(BaseModel):
     city_map: str
     missing: int = Field(ge=1, le=4, description="Range is [1, 4]")
     sparse_IRT4_number: int = Field(ge=0, description="The number of IRT4 points needs to be greater than or equal to 0")
+    @model_validator(mode='after')
+    def _check_sparse_IRT4_number(self) -> Self:
+        total_data_size = self.transmitters_number * self.maps_number
+        if not (self.sparse_IRT4_number <= total_data_size):
+            raise ValueError(f"The number of sparse IRT4 points needs to be less than or equal to total data size {total_data_size}")
+        return self
     samples_number: int = Field(ge=0, description="Inputing samples number needs to be greater than or equal to 0")
+    @model_validator(mode='after')
+    def _check_samples_number(self) -> Self:
+        total_data_size = self.transmitters_number * self.maps_number
+        if self.sparse_IRT4_number > 0:
+            if not (self.samples_number <= self.sparse_IRT4_number):
+                raise ValueError(f"The number of sparse IRT4 points needs to be less than or equal to sparse_IRT4_number {self.sparse_IRT4_number}")
+        else:
+            if not (self.samples_number <= total_data_size):
+                raise ValueError(f"Inputing samples number needs to be less than or equal to total data size {total_data_size}")
+        return self
     cars_input: bool
     cars_simulation: bool
     maps_number: int = Field(ge=1, le=700, description="Range is [1, 700]")
@@ -33,11 +49,12 @@ class _DataConfig(BaseModel):
     @model_validator(mode='after')
     def _check_transmitters_number(self) -> Self:
         if self.sparse_IRT4_number > 0:
+            total_data_size = self.transmitters_number * self.maps_number
             if not (1 <= self.transmitters_number <= 2):
-                raise ValueError(f"Range is [1, 2]")
+                raise ValueError(f"transmitters_number range is [1, 2]")
         else:
             if not (1 <= self.transmitters_number <= 80):
-                raise ValueError(f"Range is [1, 80]")
+                raise ValueError(f"transmitters_number range is [1, 80]")
         return self
 
     threshold: float = Field(ge=0.0, lt=1.0, description="Range is [0, 1]")

@@ -1,4 +1,4 @@
-# configs/default.yaml
+# configs/clean_DPM_with_cars.yaml
 
 # Data-related configuration
 data:
@@ -16,7 +16,7 @@ data:
 
   simulation: "DPM"                       # Simulation mode: DPM, IRT2 or rand
   IRT2_weight: 0.5                        # When using rand mode, set the weight of IRT2 mode, with a range of (0, 1).
-  city_map: "complete"                    # City map type: complete, missing, rand. Use the full city, or input map with missing buildings. Rand means that there is a random number of missing buildings.
+  city_map: "complete"                    # City map type: complete, missing, rand. Use the full city, or input map with missing buildings. Rand means that there is a random number [1, 4] of missing buildings.
   missing: 1                              # This setting enable when the city_map is missing and indicates the number of missing buildings; the range is [1, 4].
   sparse_IRT4_number: 0                   # The number of IRT4 points; the range is [0, total_img_size). If it > 0: 
                                           # The model can only see a few fine sparse points on the map
@@ -26,8 +26,8 @@ data:
   samples_number: 0                       # If it > 0, some samples with simulation values will input; if sparse_IRT4_number = 0 
                                           # the range is [0, total_img_size), else
                                           # the range is [0, sparse_IRT4_number)
-  cars_input: false                       # Cars input or not
-  cars_simulation: false                  # Cars were used in the simulation or not
+  cars_input: true                        # Cars input or not
+  cars_simulation: true                   # Cars were used in the simulation or not
   
   maps_number: 700                        # Number of building maps; the range is [1, 700]
   transmitters_number: 80                 # Number of transmitters in one map: for modes providing sparse IRT4 samples, the value range is [1, 2]; otherwise, the value range is [1, 80].

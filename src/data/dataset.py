@@ -51,9 +51,9 @@ class RadioMapDataset(Dataset):
         else:
             if self.config.city_map == 'rand':
                 self.config.missing = np.random.randint(low=1, high=5)
-            self.config.version = np.random.randint(low=1, high=7)
+            self.version = np.random.randint(low=1, high=7)
 
-            path = path / f"{self.config.buildings_missing_dir}{self.config.missing}" / str(self.config.version)
+            path = path / f"{self.config.buildings_missing_dir}{self.config.missing}" / str(self.version)
         
         path = path / name
         return read_image(str(path), ImageReadMode.RGB).to(device=self.device, dtype=self.tensor_dtype) / 255.0
@@ -121,6 +121,6 @@ class RadioMapDataset(Dataset):
         selected_indices = torch.randperm(total_num, device=self.device)[:self.config.samples_number]
         selected_h_coords = h_coords[selected_indices]
         selected_w_coords = w_coords[selected_indices]
-        samples_gain[selected_h_coords, selected_w_coords] = gain[selected_h_coords, selected_w_coords]
+        samples_gain[selected_h_coords, selected_w_coords] = gain[0, selected_h_coords, selected_w_coords]
 
         return samples_gain

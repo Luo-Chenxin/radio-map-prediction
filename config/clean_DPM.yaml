@@ -1,0 +1,42 @@
+# configs/clean_DPM.yaml
+
+# Data-related configuration
+data:
+  root_dir: "data"                        # Dataset root directory
+  DPM_dir: "gain/DPM"                     # Dataset DPM simulation directory, and it simulated without cars
+  DPM_cars_dir: "gain/carsDPM"            # Dataset DPM simulation directory, and it simulated with cars
+  IRT2_dir: "gain/IRT2"                   # Dataset IRT2 simulation directory, and it simulated without cars
+  IRT2_cars_dir: "gain/carsIRT2"          # Dataset IRT2 simulation directory, and it simulated with cars
+  IRT4_dir: "gain/IRT4"                   # Dataset IRT4 simulation directory, and it simulated without cars
+  IRT4_cars_dir: "gain/carsIRT4"          # Dataset IRT4 simulation directory, and it simulated with cars
+  buildings_complete_dir: "png/buildings_complete"  # Dataset building maps directory, and it includes all buildings
+  buildings_missing_dir: "png/buildings_missing"    # Dataset building maps directory, and it misses some buildings
+  antennas_dir: "png/antennas"            # Dataset antenna maps directory
+  cars_dir: "png/cars"                    # Dataset car maps directory
+
+  simulation: "DPM"                       # Simulation mode: DPM, IRT2 or rand
+  IRT2_weight: 0.5                        # When using rand mode, set the weight of IRT2 mode, with a range of (0, 1).
+  city_map: "complete"                    # City map type: complete, missing, rand. Use the full city, or input map with missing buildings. Rand means that there is a random number [1, 4] of missing buildings.
+  missing: 1                              # This setting enable when the city_map is missing and indicates the number of missing buildings; the range is [1, 4].
+  sparse_IRT4_number: 0                   # The number of IRT4 points; the range is [0, total_img_size). If it > 0: 
+                                          # The model can only see a few fine sparse points on the map
+                                          # The dataloader will output a mask matrix to achieve this effect during subsequent training.
+                                          # Simulation uses IRT4.
+                                          # Transmitters number is in range [1, 2].
+  samples_number: 0                       # If it > 0, some samples with simulation values will input; if sparse_IRT4_number = 0 
+                                          # the range is [0, total_img_size), else
+                                          # the range is [0, sparse_IRT4_number)
+  cars_input: false                       # Cars input or not
+  cars_simulation: false                  # Cars were used in the simulation or not
+  
+  maps_number: 700                        # Number of building maps; the range is [1, 700]
+  transmitters_number: 80                 # Number of transmitters in one map: for modes providing sparse IRT4 samples, the value range is [1, 2]; otherwise, the value range is [1, 80].
+
+  threshold: 0.2                          # Pathloss threshold; the range is [0, 1)
+
+  img_size:                               # Image size 
+    - 256
+    - 256
+  batch_size: 32                          # Batch size
+
+  rand_seed: 42                           # Random seed; ensure reproduction

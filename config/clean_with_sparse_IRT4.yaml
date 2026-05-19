@@ -1,5 +1,25 @@
 # configs/clean_with_sparse_IRT4.yaml
 
+global:
+  seed: 42                                # Random seed; ensure reproduction
+
+load:
+  train_rato: 0.7
+  val_ratio: 0.2
+  train_batch_size: 8
+  val_batch_size: 16
+  test_batch_size: 16
+
+train:
+  epoch: 50
+  learning_rate: 1e-4
+  scheduler:
+    step_size: 30
+    gamma: 0.1
+  log_dir: "outputs/logs"
+  checkpoint_dir: "outputs/checkpoints"
+  save_interval: 5
+
 # Data-related configuration
 data:
   root_dir: "data"                        # Dataset root directory
@@ -37,6 +57,3 @@ data:
   img_size:                               # Image size 
     - 256
     - 256
-  batch_size: 32                          # Batch size
-
-  rand_seed: 42                           # Random seed; ensure reproduction

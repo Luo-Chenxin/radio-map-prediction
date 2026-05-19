@@ -4,9 +4,33 @@ from typing import Annotated, Tuple
 from typing_extensions import Self
 import sys
 
+class _LoadConfig(BaseModel):
+    train_ratio: float = Field(gt=0.0, lt=1.0, description="Range is (0, 1)")
+    val_ratio: float = Field(gt=0.0, lt=1.0, description="Range is (0, 1)")
+    @model_validator(mode='after')
+    def _check_split_ratio(self) -> Self:
+        test_ration = 1.0 - (self.train_ratio + self.val_ratio)
+        if not (test_ration > 0.0):
+            raise ValueError(f"The test ration needs to be greater than 0.0, check train_ratio and val_ratio")
+        return self
+    train_batch_size: int = Field(gt=0, le=128, description="Range is (0, 128]")
+    val_batch_size: int = Field(gt=0, le=128, description="Range is (0, 128]")
+    test_batch_size: int = Field(gt=0, le=128, description="Range is (0, 128]")
+
+class _SchedulerConfgig(BaseModel):
+    step_size: int = Field(gt=0, description="Step size needs to be greater than 0")
+    gamma: float = Field(gt=0.0, lt=1.0, description="Range is (0, 1)")
+
+class _TrainConfig(BaseModel):
+    epoch: int = Field(gt=0, description="Epoch needs to be greater than 0")
+    learning_rate: float = Field(gt=0.0, description="Learning rate needs to be greater than 0.0")
+    scheduler: _SchedulerConfgig
+    log_dir: str
+    checkpoint_dir: str
+    save_interval: int = Field(gt=0, description="Save interval needs to be greater than 0")
+
 _ImgSize = Tuple[int, int]
 
-# Define the configuration template (specifying what fields must be included and their types).
 class _DataConfig(BaseModel):
     root_dir: str
     DPM_dir: str
@@ -59,10 +83,11 @@ class _DataConfig(BaseModel):
 
     threshold: float = Field(ge=0.0, lt=1.0, description="Range is [0, 1]")
     img_size: _ImgSize
-    batch_size: int = Field(gt=0, description="Batch size > 0")
-    rand_seed: int = Field(ge=0, description="Random seed >= 0")
 
 class _Config(BaseModel):
+    seed: int = Field(ge=0, description="Seed needs to be greater than 0")
+    load: _LoadConfig
+    train: _TrainConfig 
     data: _DataConfig
 
 def load_config_strict(config_path="config/default.yaml"):

@@ -1,7 +1,6 @@
 # configs/clean_DPM_missing_buildings.yaml
 
-global:
-  seed: 42                                # Random seed; ensure reproduction
+seed: 42                                # Random seed; ensure reproduction
 
 load:
   train_rato: 0.7
@@ -9,6 +8,7 @@ load:
   train_batch_size: 8
   val_batch_size: 16
   test_batch_size: 16
+  num_workers: 2
 
 train:
   epoch: 50
@@ -19,6 +19,9 @@ train:
   log_dir: "outputs/logs"
   checkpoint_dir: "outputs/checkpoints"
   save_interval: 5
+  early_stop:
+    patience: 15
+    delta: 1e-3
 
 # Data-related configuration
 data:

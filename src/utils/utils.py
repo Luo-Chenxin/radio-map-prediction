@@ -5,8 +5,8 @@ from typing_extensions import Self
 import sys
 
 class _LoadConfig(BaseModel):
-    train_ratio: float = Field(gt=0.0, lt=1.0, description="Range is (0, 1)")
-    val_ratio: float = Field(gt=0.0, lt=1.0, description="Range is (0, 1)")
+    train_ratio: float = Field(gt=0.0, lt=1.0, description="Range is (0.0, 1.0)")
+    val_ratio: float = Field(gt=0.0, lt=1.0, description="Range is (0.0, 1.0)")
     @model_validator(mode='after')
     def _check_split_ratio(self) -> Self:
         test_ration = 1.0 - (self.train_ratio + self.val_ratio)
@@ -16,18 +16,24 @@ class _LoadConfig(BaseModel):
     train_batch_size: int = Field(gt=0, le=128, description="Range is (0, 128]")
     val_batch_size: int = Field(gt=0, le=128, description="Range is (0, 128]")
     test_batch_size: int = Field(gt=0, le=128, description="Range is (0, 128]")
+    num_workers: int = Field(ge=0, le=64, description="Range is [0, 64]")
 
-class _SchedulerConfgig(BaseModel):
+class _SchedulerConfig(BaseModel):
     step_size: int = Field(gt=0, description="Step size needs to be greater than 0")
-    gamma: float = Field(gt=0.0, lt=1.0, description="Range is (0, 1)")
+    gamma: float = Field(gt=0.0, lt=1.0, description="Range is (0.0, 1.0)")
+
+class _EarlyStopConfig(BaseModel):
+    patience: int = Field(gt=0, description="patience needs to be greater than 0")
+    delta: float = Field(ge=0.0, lt=0.1, description="Range is [0.0, 0.1)")
 
 class _TrainConfig(BaseModel):
     epoch: int = Field(gt=0, description="Epoch needs to be greater than 0")
     learning_rate: float = Field(gt=0.0, description="Learning rate needs to be greater than 0.0")
-    scheduler: _SchedulerConfgig
+    scheduler: _SchedulerConfig
     log_dir: str
     checkpoint_dir: str
     save_interval: int = Field(gt=0, description="Save interval needs to be greater than 0")
+    early_stop: _EarlyStopConfig
 
 _ImgSize = Tuple[int, int]
 
@@ -45,7 +51,7 @@ class _DataConfig(BaseModel):
     cars_dir: str
 
     simulation: str
-    IRT2_weight: float = Field(gt=0.0, lt=1.0, description="Range is (0, 1)")
+    IRT2_weight: float = Field(gt=0.0, lt=1.0, description="Range is (0.0, 1.0)")
     city_map: str
     missing: int = Field(ge=1, le=4, description="Range is [1, 4]")
     sparse_IRT4_number: int = Field(ge=0, description="The number of IRT4 points needs to be greater than or equal to 0")

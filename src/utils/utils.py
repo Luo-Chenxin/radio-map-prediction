@@ -1,6 +1,6 @@
 import yaml
 from pydantic import BaseModel, ValidationError, Field, model_validator
-from typing import Annotated, Tuple
+from typing import Tuple
 from typing_extensions import Self
 import sys
 
@@ -90,7 +90,7 @@ class _Config(BaseModel):
     train: _TrainConfig 
     data: _DataConfig
 
-def load_config_strict(config_path="config/default.yaml"):
+def load_config_strict(config_path):
     """
     Load, check and return the contents of the YAML configuration file.
     """

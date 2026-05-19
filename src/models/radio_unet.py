@@ -46,13 +46,14 @@ class _ConvReluNoPool(nn.Module):
     
     def forward(self, x):
         return self.block(x)
-
-class RadioWNet(nn.Module):
+    
+class _FirstUNet(nn.Module):
     """
-    Two-phase cascaded U-Net for radio map prediction.
+    The First U-net
     """
     def __init__(self, in_channels, first_out_channels):
         super().__init__()
+
         self.in_channels = in_channels
 
         # ================= First U-Net (Encoder) =================
@@ -77,30 +78,7 @@ class RadioWNet(nn.Module):
         self.conv_up0 = _ConvReluT(80, 20, 6)     # skip connect: 40+40=80
         self.conv_up00 = _ConvReluNoPool(20 + first_out_channels + in_channels, 20, 5)  # skip connect
         self.conv_up000 = _ConvReluNoPool(20 + in_channels, 1, 5)  # skip connect
-
-        # ================= Second U-Net (Encoder) =================
-        self.Wlayer00 = _ConvReluNoPool(1 + in_channels, 20, 3)  # skip connect
-        self.Wlayer0 = _ConvRelu(20, 30, 5)
-        self.Wlayer1 = _ConvRelu(30, 40, 5)
-        self.Wlayer10 = _ConvReluNoPool(40, 50, 5)
-        self.Wlayer2 = _ConvRelu(50, 60, 5)
-        self.Wlayer20 = _ConvReluNoPool(60, 70, 3)
-        self.Wlayer3 = _ConvRelu(70, 90, 5)
-        self.Wlayer4 = _ConvRelu(90, 110, 5)
-        self.Wlayer5 = _ConvRelu(110, 150, 5)
-
-        # ================= First U-Net (Decoder) =================
-        self.Wconv_up5 = _ConvReluT(150, 110, 4)
-        self.Wconv_up4 = _ConvReluT(220, 90, 4)   # skip connect: 110+110=220
-        self.Wconv_up3 = _ConvReluT(180, 70, 4)   # skip connect: 90+90=180
-        self.Wconv_up20 = _ConvReluNoPool(140, 60, 3) # skip connect: 70+70=140
-        self.Wconv_up2 = _ConvReluT(120, 50, 6)   # skip connect: 60+60=120
-        self.Wconv_up10 = _ConvReluNoPool(100, 40, 5) # skip connect: 50+50=100
-        self.Wconv_up1 = _ConvReluT(80, 30, 6)    # skip connect: 40+40=80
-        self.Wconv_up0 = _ConvReluT(60, 20, 6)    # skip connect: 30+30=60
-        self.Wconv_up00 = _ConvReluNoPool(20 + 20 + 1 + in_channels, 20, 5) # skip connect
-        self.Wconv_up000 = _ConvReluNoPool(20 + 1 + in_channels, 1, 5) # skip connect
-
+    
     def forward(self, x):
         # --- First U-Net Forward ---
         e00 = self.layer00(x)
@@ -124,6 +102,39 @@ class RadioWNet(nn.Module):
         d00 = self.conv_up00(torch.cat([d0, e00, x], dim=1))
         d000 = self.conv_up000(torch.cat([d00, x], dim=1))
 
+        return d000
+
+class _SecondUNet(nn.Module):
+    """
+    The second U-net
+    """
+    def __init__(self, in_channels):
+        super().__init__()
+
+        # ================= Second U-Net (Encoder) =================
+        self.Wlayer00 = _ConvReluNoPool(1 + in_channels, 20, 3)  # skip connect
+        self.Wlayer0 = _ConvRelu(20, 30, 5)
+        self.Wlayer1 = _ConvRelu(30, 40, 5)
+        self.Wlayer10 = _ConvReluNoPool(40, 50, 5)
+        self.Wlayer2 = _ConvRelu(50, 60, 5)
+        self.Wlayer20 = _ConvReluNoPool(60, 70, 3)
+        self.Wlayer3 = _ConvRelu(70, 90, 5)
+        self.Wlayer4 = _ConvRelu(90, 110, 5)
+        self.Wlayer5 = _ConvRelu(110, 150, 5)
+
+        # ================= First U-Net (Decoder) =================
+        self.Wconv_up5 = _ConvReluT(150, 110, 4)
+        self.Wconv_up4 = _ConvReluT(220, 90, 4)   # skip connect: 110+110=220
+        self.Wconv_up3 = _ConvReluT(180, 70, 4)   # skip connect: 90+90=180
+        self.Wconv_up20 = _ConvReluNoPool(140, 60, 3) # skip connect: 70+70=140
+        self.Wconv_up2 = _ConvReluT(120, 50, 6)   # skip connect: 60+60=120
+        self.Wconv_up10 = _ConvReluNoPool(100, 40, 5) # skip connect: 50+50=100
+        self.Wconv_up1 = _ConvReluT(80, 30, 6)    # skip connect: 40+40=80
+        self.Wconv_up0 = _ConvReluT(60, 20, 6)    # skip connect: 30+30=60
+        self.Wconv_up00 = _ConvReluNoPool(20 + 20 + 1 + in_channels, 20, 5) # skip connect
+        self.Wconv_up000 = _ConvReluNoPool(20 + 1 + in_channels, 1, 5) # skip connect
+    
+    def forward(self, d000, x):
         # --- Second U-Net Forward ---
         w_x = torch.cat([d000, x], dim=1)
         
@@ -147,5 +158,24 @@ class RadioWNet(nn.Module):
         wd0 = self.Wconv_up0(torch.cat([wd1, we0], dim=1))
         wd00 = self.Wconv_up00(torch.cat([wd0, we00, w_x], dim=1))
         wd000 = self.Wconv_up000(torch.cat([wd00, w_x], dim=1))
+
+        return wd000
+
+
+class RadioWNet(nn.Module):
+    """
+    Two-phase cascaded U-Net for radio map prediction.
+    """
+    def __init__(self, in_channels, first_out_channels):
+        super().__init__()
+        self.in_channels = in_channels
+        self.first_unet = _FirstUNet(in_channels, first_out_channels)
+        self.second_unet = _SecondUNet(in_channels)
+
+        
+
+    def forward(self, x):
+        d000 = self.first_unet(x)
+        wd000 = self.second_unet(d000, x)
 
         return d000, wd000

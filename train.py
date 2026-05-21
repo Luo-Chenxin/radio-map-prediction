@@ -1,73 +1,10 @@
 import torch
-import torch.nn as nn
 from pathlib import Path
-from torch.utils.data import DataLoader
-from tqdm import tqdm
-from torch.optim import lr_scheduler
-
-from utils.config import load_config_strict, set_seed, setup_logging, split_dataset, get_saved_model_path
-from dataset import RadioSeerDataset
+from src.dataset import RadioSeerDataset
 from src.models.radio_unet import RadioWnet 
+from src.utils.config import load_config_strict
 
-def _train_one_epoch(model, loader, criterion, optimizer, device, use_mask_loss):
-    """Encapsulated single-round training"""
-    model.train()
-    total_loss = 0.0
-    pbar = tqdm(loader, desc="Training", leave=False)
-    
-    for batch in pbar:
-        if use_mask_loss:
-            inputs, targets, masks = batch
-            inputs, targets, masks = inputs.to(device), masks.to(device), targets.to(device)
-        else:
-            inputs, targets = batch
-            inputs, targets = inputs.to(device), targets.to(device)
-
-        optimizer.zero_grad()
-        outputs = model(inputs)
-
-        # Loss Calculation
-        if use_mask_loss:
-            loss = criterion(outputs[masks.bool()], targets[masks.bool()])
-        else:
-            loss = criterion(outputs, targets)
-
-        loss.backward()
-        optimizer.step()
-        
-        total_loss += loss.item()
-        pbar.set_postfix({"avg_loss": f"{total_loss / (pbar.n + 1):.4f}"})
-        
-    return total_loss / len(loader)
-
-@torch.no_grad()
-def _validate(model, loader, criterion, device, use_mask_loss):
-    """Encapsulated verification function"""
-    model.eval()
-    total_loss = 0.0
-    pbar = tqdm(loader, desc="Validating", leave=False)
-    for batch in pbar:
-        if use_mask_loss:
-            inputs, targets, masks = batch
-            inputs, targets, masks = inputs.to(device), masks.to(device), targets.to(device)
-        else:
-            inputs, targets = batch
-            inputs, targets = inputs.to(device), targets.to(device)
-        
-        outputs = model(inputs)
-
-        # Loss Calculation
-        if use_mask_loss:
-            loss = criterion(outputs[masks.bool()], targets[masks.bool()])
-        else:
-            loss = criterion(outputs, targets)
-        
-        total_loss += loss.item()
-        pbar.set_postfix({"avg_loss": f"{total_loss / (pbar.n + 1):.4f}"})
-
-    return total_loss / len(loader)
-
-def _get_RadioUNet_in_channels_and_first_out_channels(config):
+def _get_radio_unet_model(config):
     in_channels = 2
     if config.samples_number > 0:
         in_channels = in_channels + 1
@@ -76,23 +13,19 @@ def _get_RadioUNet_in_channels_and_first_out_channels(config):
     
     first_out_channels = 6 if in_channels <= 3 else 10
 
-    return in_channels, first_out_channels
 
+def _mkdir(config):
+    out_dir = Path(config.train.out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
 
 def trainRadioUNet(config_path:str, train_id:str, model=None):
-    """
-    model: 
-    """
-    # 1. Load configuration, set logs and random seed
-    cfg = load_config_strict(config_path) 
-    logger = setup_logging(cfg.train.log_dir, train_id)
-    set_seed(cfg.seed)
-    
-    device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
-    logger.info(f"Start Training: {train_id} | device: {device}")
 
-    # 2. Prepare dataset
-    full_dataset = RadioSeerDataset(config=cfg.data)
+    config = load_config_strict(config_path)
+    _mkdir(config)
+    device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
+
+    # Prepare dataset
+    full_dataset = RadioSeerDataset(config=config.data)
     train_subset, val_subset, _ = split_dataset(full_dataset, cfg.load.train_ratio, cfg.load.val_ratio, cfg.seed)
     
     train_loader = DataLoader(
@@ -160,3 +93,4 @@ def trainRadioUNet(config_path:str, train_id:str, model=None):
             break
 
     logger.info("Training Finish")
+

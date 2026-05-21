@@ -104,11 +104,11 @@ class RadioSeerDataset(Dataset):
         return mask, h_coords, w_coords
     
     def _generate_samples(
-            self, 
-            gain,
-            total_num = None, 
-            h_coords = None, 
-            w_coords = None):
+        self, 
+        gain,
+        total_num = None, 
+        h_coords = None, 
+        w_coords = None):
         
         H, W = self.config.img_size[0], self.config.img_size[1]
         if total_num is None and h_coords is None and w_coords is None:

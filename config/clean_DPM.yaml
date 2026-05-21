@@ -5,10 +5,10 @@ seed: 42                                # Random seed; ensure reproduction
 load:
   train_ratio: 0.7
   val_ratio: 0.2
-  train_batch_size: 8
-  val_batch_size: 16
-  test_batch_size: 16
-  num_workers: 2
+  train_batch_size: 16
+  val_batch_size: 32
+  test_batch_size: 32
+  num_workers: 1
 
 train:
   epoch: 50
@@ -19,7 +19,7 @@ train:
   early_stop:
     patience: 15
     delta: 1e-4                           # The next best model must be at least [delta] larger than the previous one
-  out_dir: "outputs/clean_DPM"
+  out_dir: "outputs/clean_DPM"            # Model save path
   log_file: "outputs/clean_DPM.log"
 
 # Data-related configuration

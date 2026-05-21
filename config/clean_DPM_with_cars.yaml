@@ -3,7 +3,7 @@
 seed: 42                                # Random seed; ensure reproduction
 
 load:
-  train_rato: 0.7
+  train_ratio: 0.7
   val_ratio: 0.2
   train_batch_size: 8
   val_batch_size: 16

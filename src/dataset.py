@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import Dataset
 from torchvision.io import read_image, ImageReadMode
 
-class RadioMapDataset(Dataset):
+class RadioSeerDataset(Dataset):
     def __init__(self, config):
         self.config = config
         self.device = 'cpu'

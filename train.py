@@ -4,8 +4,8 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from torch.optim import lr_scheduler
 
-from src.utils.utils import load_config_strict, set_seed, setup_logging, split_dataset, get_saved_model_path
-from src.data.dataset import RadioMapDataset
+from utils.config import load_config_strict, set_seed, setup_logging, split_dataset, get_saved_model_path
+from dataset import RadioSeerDataset
 from src.models.radio_unet import RadioWNet 
 
 class _EarlyStopping:
@@ -197,7 +197,7 @@ def trainRadioUNet(config_path:str, train_id:str, model=None):
     logger.info(f"Start Training: {train_id} | device: {device}")
 
     # 2. Prepare dataset
-    full_dataset = RadioMapDataset(config=cfg.data)
+    full_dataset = RadioSeerDataset(config=cfg.data)
     train_subset, val_subset, _ = split_dataset(full_dataset, cfg.load.train_ratio, cfg.load.val_ratio, cfg.seed)
     
     train_loader = DataLoader(

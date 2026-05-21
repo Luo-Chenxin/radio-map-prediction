@@ -14,20 +14,20 @@ class RadioSeerDataModule:
         )
         self.config = config
 
-    def get_train_dataloader(self) -> DataLoader:
+    def get_train_dataloader(self):
         return DataLoader(
         self.train_dataset, 
         batch_size=self.config.train_batch_size, 
         shuffle=True, 
         num_workers=self.config.num_workers)
     
-    def get_val_dataloader(self) -> DataLoader:
+    def get_val_dataloader(self):
         return DataLoader(
         self.val_dataset, 
         batch_size=self.config.val_batch_size,
         num_workers=self.config.num_workers)
     
-    def get_test_dataloader(self) -> DataLoader:
+    def get_test_dataloader(self):
         return DataLoader(
         self.test_dataset, 
         batch_size=self.config.test_batch_size,

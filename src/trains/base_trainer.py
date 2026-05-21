@@ -111,10 +111,10 @@ class BaseTrainer:
         return total_loss / len(loader)
 
     # [Main Loop] The master switch that starts training
-    def fit(self, train_loader, val_loader, epochs):
+    def fit(self, train_loader, val_loader):
         self.logger.info(f"Start Training | Device: {self.device}")
 
-        for epoch in range(epochs):
+        for epoch in range(self.config.epoch):
 
             self.logger.info(f"Start Training Epoch {epoch+1}")
 

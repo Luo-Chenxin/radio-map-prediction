@@ -1,7 +1,7 @@
 import torch
 import logging
 from tqdm import tqdm
-from early_stopping import EarlyStopping
+from src.trains.early_stopping import EarlyStopping
 
 class BaseTrainer:
     def __init__(self, model, device, config):
@@ -9,13 +9,13 @@ class BaseTrainer:
         self.device = device
         self.config = config
 
-        self.set_logger()
-        self.set_criterion()
-        self.set_optimizer()
-        self.set_scheduler()
-        self.set_early_stopping()
+        self._set_logger()
+        self._set_criterion()
+        self._set_optimizer()
+        self._set_scheduler()
+        self._set_early_stopping()
     
-    def set_logger(self):
+    def _set_logger(self):
         """
         [Hook Function] Subclasses can override this method to set own logger function
         """
@@ -23,24 +23,24 @@ class BaseTrainer:
             level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s',
             handlers=[
-                logging.FileHandler(self.config.log_file),
+                logging.FileHandler(self.config.log_file, mode='w'),
             ]
         )
         self.logger = logging.getLogger(__name__)
     
-    def set_criterion(self):
+    def _set_criterion(self):
         """
         [Hook Function] Subclasses can override this method to set own criterion function
         """
         self.criterion = torch.nn.MSELoss()
     
-    def set_optimizer(self):
+    def _set_optimizer(self):
         """
         [Hook Function] Subclasses can override this method to set own optimizer function
         """
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config.learning_rate)
 
-    def set_scheduler(self):
+    def _set_scheduler(self):
         """
         [Hook Function] Subclasses can override this method to set own scheduler function
         """
@@ -49,7 +49,7 @@ class BaseTrainer:
             step_size=self.config.scheduler.step_size, 
             gamma=self.config.scheduler.gamma)
     
-    def set_early_stopping(self):
+    def _set_early_stopping(self):
         """
         [Hook Function] Subclasses can override this method to set own early stopping function
         """
@@ -59,17 +59,17 @@ class BaseTrainer:
             out_dir=self.config.out_dir
         )
  
-    def train_step(self, batch, batch_idx):
+    def _train_step(self, batch, batch_idx):
         """
         [Hook Function] Subclasses must override this method to define the specific logic for a single training iteration
         """
-        raise NotImplementedError("Subclasses must implement the train_step method")
+        raise NotImplementedError("Subclasses must implement the _train_step method")
     
-    def val_step(self, batch, batch_idx):
+    def _val_step(self, batch, batch_idx):
         """
         [Hook Function] Subclasses must override this method to define the specific logic for a single validation iteration
         """
-        raise NotImplementedError("Subclasses must implement the val_step method")
+        raise NotImplementedError("Subclasses must implement the _val_step method")
 
     def _train_one_epoch(self, loader):
         """
@@ -82,7 +82,7 @@ class BaseTrainer:
         for batch_idx, batch in enumerate(pbar):
             self.optimizer.zero_grad()
 
-            loss = self.train_step(batch, batch_idx)
+            loss = self._train_step(batch, batch_idx)
             
             loss.backward()
             self.optimizer.step()
@@ -103,7 +103,8 @@ class BaseTrainer:
         pbar = tqdm(loader, desc="Validating", leave=False)
         
         for batch_idx, batch in enumerate(pbar):
-            loss = self.val_step(batch, batch_idx)
+            loss = self._val_step(batch, batch_idx)
+
             total_loss += loss.item()
             pbar.set_postfix({"avg_loss": f"{total_loss / (batch_idx + 1):.4f}"})
             

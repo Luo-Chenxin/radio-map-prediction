@@ -1,4 +1,5 @@
 import torch
+from pathlib import Path
 
 BEST_MODEL_PARTERN = "best_model.pt"
 
@@ -6,7 +7,7 @@ class EarlyStopping:
     def __init__(self, patience, delta, out_dir):
         self.patience = patience
         self.delta = delta
-        self.out_dir = out_dir
+        self.model_path = Path(out_dir) / BEST_MODEL_PARTERN
         self.best_score = None
         self.counter = 0
         self.early_stop = False
@@ -15,15 +16,15 @@ class EarlyStopping:
         score = -val_loss
         if self.best_score is None:
             self.best_score = score
-            self.save_checkpoint(model)
+            self.save_model(model)
         elif score < self.best_score + self.delta:
             self.counter += 1
             if self.counter >= self.patience:
                 self.early_stop = True
         else:
             self.best_score = score
-            self.save_checkpoint(model)
+            self.save_model(model)
             self.counter = 0
 
-    def save_checkpoint(self, model):
-        torch.save(model.state_dict(), self.out_dir / BEST_MODEL_PARTERN)
+    def save_model(self, model):
+        torch.save(model.state_dict(), self.model_path)

@@ -18,9 +18,9 @@ train:
     gamma: 0.1                            # Attenuation ratio
   early_stop:
     patience: 15
-    delta: 1e-3
+    delta: 1e-4                           # The next best model must be at least [delta] larger than the previous one
   out_dir: "outputs/clean_DPM"
-  log_file: "logs/clean_DPM.log"
+  log_file: "outputs/clean_DPM.log"
 
 # Data-related configuration
 data:

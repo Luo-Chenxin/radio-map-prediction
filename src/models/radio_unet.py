@@ -47,16 +47,16 @@ class _ConvReluNoPool(nn.Module):
     def forward(self, x):
         return self.block(x)
     
-class _FirstUNet(nn.Module):
+class RadioUNet(nn.Module):
     """
-    The First U-net
+    The Radio/First U-net
     """
     def __init__(self, in_channels, first_out_channels):
         super().__init__()
 
         self.in_channels = in_channels
 
-        # ================= First U-Net (Encoder) =================
+        # ================= Radio/First U-Net (Encoder) =================
         self.layer00 = _ConvReluNoPool(in_channels, first_out_channels, 3)
         self.layer0 = _ConvRelu(6, 40, 5)
         self.layer1 = _ConvRelu(40, 50, 5)
@@ -67,7 +67,7 @@ class _FirstUNet(nn.Module):
         self.layer4 = _ConvRelu(150, 300, 5)
         self.layer5 = _ConvRelu(300, 500, 5)
 
-        # ================= First U-Net (Decoder) =================
+        # ================= Radio/First U-Net (Decoder) =================
         self.conv_up5 = _ConvReluT(500, 300, 4)
         self.conv_up4 = _ConvReluT(600, 150, 4)   # skip connect: 300+300=600
         self.conv_up3 = _ConvReluT(300, 100, 4)   # skip connect: 150+150=300
@@ -80,7 +80,7 @@ class _FirstUNet(nn.Module):
         self.conv_up000 = _ConvReluNoPool(20 + in_channels, 1, 5)  # skip connect
     
     def forward(self, x):
-        # --- First U-Net Forward ---
+        # --- Radio/First U-Net Forward ---
         e00 = self.layer00(x)
         e0 = self.layer0(e00)
         e1 = self.layer1(e0)
@@ -106,12 +106,12 @@ class _FirstUNet(nn.Module):
 
 class _SecondUNet(nn.Module):
     """
-    The second U-net
+    The Append/Second U-net
     """
     def __init__(self, in_channels):
         super().__init__()
 
-        # ================= Second U-Net (Encoder) =================
+        # ================= Append/Second U-Net (Encoder) =================
         self.Wlayer00 = _ConvReluNoPool(1 + in_channels, 20, 3)  # skip connect
         self.Wlayer0 = _ConvRelu(20, 30, 5)
         self.Wlayer1 = _ConvRelu(30, 40, 5)
@@ -122,7 +122,7 @@ class _SecondUNet(nn.Module):
         self.Wlayer4 = _ConvRelu(90, 110, 5)
         self.Wlayer5 = _ConvRelu(110, 150, 5)
 
-        # ================= First U-Net (Decoder) =================
+        # ================= Append/Second U-Net (Decoder) =================
         self.Wconv_up5 = _ConvReluT(150, 110, 4)
         self.Wconv_up4 = _ConvReluT(220, 90, 4)   # skip connect: 110+110=220
         self.Wconv_up3 = _ConvReluT(180, 70, 4)   # skip connect: 90+90=180
@@ -135,7 +135,7 @@ class _SecondUNet(nn.Module):
         self.Wconv_up000 = _ConvReluNoPool(20 + 1 + in_channels, 1, 5) # skip connect
     
     def forward(self, d000, x):
-        # --- Second U-Net Forward ---
+        # --- Append/Second U-Net Forward ---
         w_x = torch.cat([d000, x], dim=1)
         
         we00 = self.Wlayer00(w_x)
@@ -164,12 +164,12 @@ class _SecondUNet(nn.Module):
 
 class RadioWNet(nn.Module):
     """
-    Two-phase cascaded U-Net for radio map prediction.
+    Two-phase cascaded U-Net for radio map prediction; The Radio W-net.
     """
     def __init__(self, in_channels, first_out_channels):
         super().__init__()
         self.in_channels = in_channels
-        self.first_unet = _FirstUNet(in_channels, first_out_channels)
+        self.first_unet = RadioUNet(in_channels, first_out_channels)
         self.second_unet = _SecondUNet(in_channels)
 
         
@@ -178,4 +178,4 @@ class RadioWNet(nn.Module):
         d000 = self.first_unet(x)
         wd000 = self.second_unet(d000, x)
 
-        return d000, wd000
+        return wd000

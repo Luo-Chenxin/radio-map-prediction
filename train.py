@@ -34,8 +34,68 @@ class _EarlyStopping:
     def save_checkpoint(self, model):
         torch.save(model.state_dict(), self.save_path)
 
-def _train_one_epoch(model, loader, criterion, optimizer, device, use_mask_loss, stage_output_idx):
-    """Encapsulated single-round training function"""
+class BaseTrainer:
+    def __init__(self, model, optimizer, scheduler, logger):
+        self.model = model
+        self.optimizer = optimizer
+        self.logger = logger
+        self.scheduler = scheduler
+        
+    # [Hook Function] Subclasses must override this method to define the specific logic for a single training iteration
+    def train_step(self, batch, batch_idx):
+        raise NotImplementedError("Subclasses must implement the train_step method")
+    
+    # [Hook Function] Subclasses must override this method to define the specific logic for a single validation iteration
+    def val_step(self, batch, batch_idx):
+        raise NotImplementedError("Subclasses must implement the val_step method")
+
+    # General one epoch training process
+    def _train_one_epoch(self, loader):
+        self.model.train()
+        total_loss = 0.0
+        pbar = tqdm(loader, desc="Training", leave=False)
+        
+        for batch_idx, batch in enumerate(pbar):
+            self.optimizer.zero_grad()
+
+            loss = self.train_step(batch, batch_idx)
+            
+            loss.backward()
+            self.optimizer.step()
+            
+            total_loss += loss.item()
+            pbar.set_postfix({"avg_loss": f"{total_loss / (batch_idx + 1):.4f}"})
+            
+        return total_loss / len(loader)
+
+    # General one epoch validation process
+    @torch.no_grad()
+    def _validate_one_epoch(self, loader):
+        self.model.eval()
+        total_loss = 0.0
+        pbar = tqdm(loader, desc="Validating", leave=False)
+        
+        for batch_idx, batch in enumerate(pbar):
+            loss = self.val_step(batch, batch_idx)
+            total_loss += loss.item()
+            pbar.set_postfix({"avg_loss": f"{total_loss / (batch_idx + 1):.4f}"})
+            
+        return total_loss / len(loader)
+
+    # [Main Loop] The master switch that starts training
+    def fit(self, train_loader, val_loader, epochs):
+        for epoch in range(epochs):
+            self.logger.info(f"\n--- Training Epoch {epoch+1} ---")
+            avg_train_loss = self._train_one_epoch(train_loader)
+            avg_val_loss = self._validate_one_epoch(val_loader)
+            self.logger.info(f"Epoch {epoch+1} | Train Loss: {avg_train_loss:.4f} | Val Loss: {avg_val_loss:.4f}")
+            self.scheduler.step()
+
+            self
+
+
+def _train_one_epoch(model, loader, criterion, optimizer, device, use_mask_loss):
+    """Encapsulated single-round training"""
     model.train()
     total_loss = 0.0
     pbar = tqdm(loader, desc="Training", leave=False)
@@ -49,9 +109,7 @@ def _train_one_epoch(model, loader, criterion, optimizer, device, use_mask_loss,
             inputs, targets = inputs.to(device), targets.to(device)
 
         optimizer.zero_grad()
-        
-        outputs_all = model(inputs)
-        outputs = outputs_all[stage_output_idx] # 根据阶段选择对应的输出头
+        outputs = model(inputs)
 
         # Loss Calculation
         if use_mask_loss:
@@ -68,7 +126,7 @@ def _train_one_epoch(model, loader, criterion, optimizer, device, use_mask_loss,
     return total_loss / len(loader)
 
 @torch.no_grad()
-def _validate(model, loader, criterion, device, use_mask_loss, stage_output_idx):
+def _validate(model, loader, criterion, device, use_mask_loss):
     """Encapsulated verification function"""
     model.eval()
     total_loss = 0.0
@@ -81,8 +139,7 @@ def _validate(model, loader, criterion, device, use_mask_loss, stage_output_idx)
             inputs, targets = batch
             inputs, targets = inputs.to(device), targets.to(device)
         
-        outputs_all = model(inputs)
-        outputs = outputs_all[stage_output_idx] # 根据阶段选择对应的输出头
+        outputs = model(inputs)
 
         # Loss Calculation
         if use_mask_loss:
@@ -123,6 +180,9 @@ def _recover_check_point(config, model, optimizer, early_stopping, logger, devic
         early_stopping.best_score = checkpoint.get('best_score', None)
         
         logger.info(f"Successfully recover training in epoch {start_epoch}")
+    
+def _load_model(config, device):
+
 
 def trainRadioUNet(config_path:str, train_id:str, model=None):
     """

@@ -1,12 +1,15 @@
 import torch
 import torch.nn as nn
+from pathlib import Path
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from torch.optim import lr_scheduler
 
 from utils.config import load_config_strict, set_seed, setup_logging, split_dataset, get_saved_model_path
 from dataset import RadioSeerDataset
-from src.models.radio_unet import RadioWNet 
+from src.models.radio_unet import RadioWnet 
+
+OUT_DIR = Path('outputs')
 
 class _EarlyStopping:
     def __init__(self, patience, delta, save_path):
@@ -163,26 +166,6 @@ def _get_RadioUNet_in_channels_and_first_out_channels(config):
 
     return in_channels, first_out_channels
 
-def _recover_check_point(config, model, optimizer, early_stopping, logger, device):
-    start_epoch = 0
-    checkpoint_pattern = get_saved_model_path(config, suffix="checkpoint_*")
-    checkpoint_dir = os.path.dirname(checkpoint_pattern)
-    checkpoint_files = sorted(glob.glob(os.path.join(checkpoint_dir, f"{train_id}_checkpoint_*.pt")))
-    
-    if checkpoint_files:
-        latest_checkpoint = checkpoint_files[-1]
-        logger.info(f"Find the latest check point: {latest_checkpoint}, recover training state")
-        
-        checkpoint = torch.load(latest_checkpoint, map_location=device)
-        model.load_state_dict(checkpoint['model_state_dict'])
-        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        start_epoch = checkpoint['epoch'] + 1
-        early_stopping.best_score = checkpoint.get('best_score', None)
-        
-        logger.info(f"Successfully recover training in epoch {start_epoch}")
-    
-def _load_model(config, device):
-
 
 def trainRadioUNet(config_path:str, train_id:str, model=None):
     """
@@ -215,7 +198,7 @@ def trainRadioUNet(config_path:str, train_id:str, model=None):
 
     # 3. Initialize the model, loss, optimizer and early_stopping
     in_channels, first_out_channels = _get_RadioUNet_in_channels_and_first_out_channels(cfg.data)
-    model = RadioWNet(in_channels=in_channels, first_out_channels=first_out_channels).to(device) if model is None else model
+    model = RadioWnet(in_channels=in_channels, first_out_channels=first_out_channels).to(device) if model is None else model
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=cfg.train.learning_rate)
     scheduler = lr_scheduler.StepLR(optimizer, step_size=cfg.train.scheduler.step_size, gamma=cfg.train.scheduler.gamma)

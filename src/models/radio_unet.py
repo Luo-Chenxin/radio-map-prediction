@@ -47,7 +47,7 @@ class _ConvReluNoPool(nn.Module):
     def forward(self, x):
         return self.block(x)
     
-class RadioUNet(nn.Module):
+class RadioUnet(nn.Module):
     """
     The Radio/First U-net
     """
@@ -162,14 +162,14 @@ class _SecondUNet(nn.Module):
         return wd000
 
 
-class RadioWNet(nn.Module):
+class RadioWnet(nn.Module):
     """
     Two-phase cascaded U-Net for radio map prediction; The Radio W-net.
     """
     def __init__(self, in_channels, first_out_channels):
         super().__init__()
         self.in_channels = in_channels
-        self.first_unet = RadioUNet(in_channels, first_out_channels)
+        self.first_unet = RadioUnet(in_channels, first_out_channels)
         self.second_unet = _SecondUNet(in_channels)
 
         

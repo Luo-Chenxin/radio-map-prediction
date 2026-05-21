@@ -30,10 +30,9 @@ class _TrainConfig(BaseModel):
     epoch: int = Field(gt=0, description="Epoch needs to be greater than 0")
     learning_rate: float = Field(gt=0.0, description="Learning rate needs to be greater than 0.0")
     scheduler: _SchedulerConfig
-    log_dir: str
-    checkpoint_dir: str
-    save_interval: int = Field(gt=0, description="Save interval needs to be greater than 0")
     early_stop: _EarlyStopConfig
+    out_dir: str
+    log_file: str
 
 _ImgSize = Tuple[int, int]
 

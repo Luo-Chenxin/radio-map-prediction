@@ -18,4 +18,4 @@ module load apptainer
 # --nv：Enable NVIDIA graphics card support
 # --bind：Mount the host machine's current directory (.) to the /workspace directory inside the container.
 apptainer exec --nv --bind .:/workspace pytorch.sif -C /workspace \
-    python train.py
+    python train_radio_unet_clean_DPM.py

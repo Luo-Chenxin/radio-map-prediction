@@ -1,4 +1,4 @@
-from src.trains.base_trainer import BaseTrainer
+from src.trainers.base_trainer import BaseTrainer
 
 class UnmaskedTrainer(BaseTrainer):
     """

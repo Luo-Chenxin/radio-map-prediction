@@ -1,7 +1,7 @@
 import torch
 import logging
 from tqdm import tqdm
-from src.trains.early_stopping import EarlyStopping
+from src.trainers.early_stopping import EarlyStopping
 
 class BaseTrainer:
     def __init__(self, model, device, config):

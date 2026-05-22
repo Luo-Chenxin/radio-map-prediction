@@ -58,7 +58,7 @@ class RadioUnet(nn.Module):
 
         # ================= Radio/First U-Net (Encoder) =================
         self.layer00 = _ConvReluNoPool(in_channels, first_out_channels, 3)
-        self.layer0 = _ConvRelu(6, 40, 5)
+        self.layer0 = _ConvRelu(first_out_channels, 40, 5)
         self.layer1 = _ConvRelu(40, 50, 5)
         self.layer10 = _ConvReluNoPool(50, 60, 5)
         self.layer2 = _ConvRelu(60, 100, 5)

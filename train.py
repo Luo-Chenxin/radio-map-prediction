@@ -7,7 +7,7 @@ from src.utils.config import load_config_strict
 from src.trains.unmasked_trainer import UnmaskedTrainer
 
 def _get_radio_unet_model(config):
-    in_channels = 2
+    in_channels = 1 + 1
     if config.samples_number > 0:
         in_channels = in_channels + 1
     if config.cars_input:
@@ -22,7 +22,7 @@ def _mkdir(config):
     out_dir = Path(config.train.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-def train(config_path:str):
+def train(config_path):
     config = load_config_strict(config_path)
     _mkdir(config)
     device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
@@ -38,3 +38,5 @@ def train(config_path:str):
 
     trainer.fit(train_loader, val_loader)
 
+if __name__ == "__main__":
+    train('config/clean_DPM.yaml')

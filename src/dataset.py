@@ -23,22 +23,22 @@ class RadioSeerDataset(Dataset):
         gain = self._load_gain(map_idx, tx_idx)
         gain = self._apply_threshold(gain)
         
-        inputs = [buildings, transmitters]
+        inputs = torch.cat([buildings, transmitters], dim=0)
         mask = None
 
         if self.config.sparse_IRT4_number > 0:
             mask, h_coords, w_coords = self._generate_mask()
             if self.config.samples_number > 0:
                 samples_gain = self._generate_samples(gain, self.config.sparse_IRT4_number, h_coords, w_coords)
-                inputs.append(samples_gain)
+                inputs = torch.cat([inputs, samples_gain], dim=0)
         else:
             if self.config.samples_number > 0:
                 samples_gain = self._generate_samples(gain)
-                inputs.append(samples_gain)
+                inputs = torch.cat([inputs, samples_gain], dim=0)
 
         if self.config.cars_input:
             cars = self._load_cars(map_idx)
-            inputs.append(cars)
+            inputs = torch.cat([inputs, samples_gain], dim=0)
         
         return (inputs, gain) if mask is None else (inputs, gain, mask)
 
@@ -56,15 +56,15 @@ class RadioSeerDataset(Dataset):
             path = path / f"{self.config.buildings_missing_dir}{self.config.missing}" / str(self.version)
         
         path = path / name
-        return read_image(str(path), ImageReadMode.RGB).to(device=self.device, dtype=self.tensor_dtype) / 255.0
+        return read_image(str(path), ImageReadMode.GRAY).to(device=self.device, dtype=self.tensor_dtype) / 255.0
     
     def _load_cars(self, map_idx):
         path = Path(self.config.root_dir) / self.config.cars_dir / f"{str(map_idx)}.png"
-        return read_image(str(path), ImageReadMode.RGB).to(device=self.device, dtype=self.tensor_dtype) / 255.0
+        return read_image(str(path), ImageReadMode.GRAY).to(device=self.device, dtype=self.tensor_dtype) / 255.0
     
     def _load_transmitters(self, map_idx, tx_idx):
         path = Path(self.config.root_dir) / self.config.antennas_dir / f"{map_idx}_{tx_idx}.png"
-        return read_image(str(path), ImageReadMode.RGB).to(device=self.device, dtype=self.tensor_dtype) / 255.0
+        return read_image(str(path), ImageReadMode.GRAY).to(device=self.device, dtype=self.tensor_dtype) / 255.0
 
 
     def _load_gain(self, map_idx, tx_idx):

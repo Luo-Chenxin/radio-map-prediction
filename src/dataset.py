@@ -5,10 +5,11 @@ from torch.utils.data import Dataset
 from torchvision.io import read_image, ImageReadMode
 
 class RadioSeerDataset(Dataset):
-    def __init__(self, config):
+    def __init__(self, config, seed):
         self.config = config
         self.device = 'cpu'
         self.tensor_dtype = torch.float32
+        np.random.seed(seed)
 
     def __len__(self):
         return self.config.maps_number*self.config.transmitters_number

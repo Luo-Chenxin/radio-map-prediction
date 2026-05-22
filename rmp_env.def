@@ -1,0 +1,30 @@
+Bootstrap: docker
+From: continuumio/miniconda3:latest
+
+%files
+    # Copy environment.yml to the /tmp directory inside the container.
+    environment.yml /tmp/environment.yml
+
+%post
+    # The %post phase is equivalent to executing the initialization script with root privileges inside the container
+
+    echo "Creating a Conda environment in a container..."
+    conda env create -f /tmp/environment.yml
+    conda clean --all -y
+    rm /tmp/environment.yml
+
+%environment
+    # %environment sets the global environment variable for each runtime of the container
+    
+    export CONDA_DEFAULT_ENV=rmp
+
+    # Ensure that the container runtime preferentially uses Python and related tools from your dedicated environment
+    export PATH=/opt/conda/envs/rmp/bin:$PATH
+
+    # Preventing Python within a container from incorrectly calling user-level packages on the host machine
+    export PYTHONNOUSERSITE=1
+
+%runscript
+    # Defines the default action when executing ./rmp_env.sif
+    echo "Apptainer: rmp environment is ready!"
+    exec /bin/bash

@@ -1,30 +1,34 @@
 Bootstrap: docker
-From: continuumio/miniconda3:latest
-
-%files
-    # Copy environment.yml to the /tmp directory inside the container.
-    environment.yml /tmp/environment.yml
+From: nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04
 
 %post
-    # The %post phase is equivalent to executing the initialization script with root privileges inside the container
+    export DEBIAN_FRONTEND=noninteractive
+
+    echo "Install miniconda & basic tools..."
+    apt-get update && apt-get install -y wget
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh
+    bash /tmp/miniconda.sh -b -p /opt/conda
+    rm /tmp/miniconda.sh
+    
+    # Temporarily add the conda path
+    export PATH=/opt/conda/bin:$PATH
 
     echo "Creating a Conda environment in a container..."
+    wget https://raw.githubusercontent.com/Luo-Chenxin/radio-map-prediction/main/environment.yml -O /tmp/environment.yml
+    
+    # Explicitly accept the terms of service in non-interactive mode
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+
     conda env create -f /tmp/environment.yml
     conda clean --all -y
     rm /tmp/environment.yml
 
 %environment
-    # %environment sets the global environment variable for each runtime of the container
-    
+    export PATH=/opt/conda/envs/rmp/bin:/opt/conda/bin:$PATH
     export CONDA_DEFAULT_ENV=rmp
-
-    # Ensure that the container runtime preferentially uses Python and related tools from your dedicated environment
-    export PATH=/opt/conda/envs/rmp/bin:$PATH
-
-    # Preventing Python within a container from incorrectly calling user-level packages on the host machine
     export PYTHONNOUSERSITE=1
 
 %runscript
-    # Defines the default action when executing ./rmp_env.sif
     echo "Apptainer: rmp environment is ready!"
     exec /bin/bash

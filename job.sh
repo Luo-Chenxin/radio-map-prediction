@@ -14,7 +14,7 @@
 # Load the Apptainer module
 module load apptainer
 
-# 3. Start training using Apptainer
+# Training using Apptainer
 # --nv：Enable NVIDIA graphics card support
 # --bind：Mount the host machine's current directory (.) to the /workspace directory inside the container.
 apptainer exec --nv --bind .:/workspace pytorch.sif -C /workspace \

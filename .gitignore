@@ -21,3 +21,4 @@ debug_*.py
 *.sif
 *.out
 *.err
+*.csv

@@ -19,3 +19,5 @@ Thumbs.db
 *.tmp
 debug_*.py
 *.sif
+*.out
+*.err

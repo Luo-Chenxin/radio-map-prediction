@@ -67,7 +67,8 @@ class BaseTrainer:
     def _train_step(self, batch, batch_idx) -> torch.Tensor:
         """
         [Hook Function] Subclasses must override this method to define the specific logic for a single training iteration
-        Returns:
+        
+        Return:
           loss: torch.Tensor
         """
         raise NotImplementedError("Subclasses must implement the _train_step method")
@@ -75,15 +76,17 @@ class BaseTrainer:
     def _val_step(self, batch, batch_idx) -> float:
         """
         [Hook Function] Subclasses must override this method to define the specific logic for a single validation iteration
-        Returns:
+        
+        Return:
           loss: float
         """
         raise NotImplementedError("Subclasses must implement the _val_step method")
 
     def _test_step(self, batch, batch_idx) -> tuple[np.ndarray, np.ndarray, int]:
         """
-        [Hook Function] Subclasses must override this method to define the specific logic for a single test iteration
-        Returns: 
+        [Hook Function] Subclasses must override this method to define the specific logic for a single testing iteration
+        
+        Return: 
           target: numpy.ndarray
           prediction: numpy.ndarray
           samples_size: int

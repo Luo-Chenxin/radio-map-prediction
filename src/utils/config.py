@@ -71,8 +71,7 @@ class _DataConfig(BaseModel):
             if not (self.samples_number <= total_img_size):
                 raise ValueError(f"Inputing samples number needs to be less than or equal to total image size {total_img_size}")
         return self
-    cars_input: bool
-    cars_simulation: bool
+    cars_exist: bool
     maps_number: int = Field(ge=1, le=700, description="Range is [1, 700]")
     transmitters_number: int
     @model_validator(mode='after')

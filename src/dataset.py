@@ -39,7 +39,7 @@ class RadioSeerDataset(Dataset):
 
         if self.config.cars_input:
             cars = self._load_cars(map_idx)
-            inputs = torch.cat([inputs, samples_gain], dim=0)
+            inputs = torch.cat([inputs, cars], dim=0)
         
         return (inputs, gain) if mask is None else (inputs, gain, mask)
 
@@ -79,7 +79,7 @@ class RadioSeerDataset(Dataset):
         pathIRT4 = Path(self.config.IRT4_cars_dir) if self.config.cars_simulation else Path(self.config.IRT4_dir)
         pathIRT4 = path / pathIRT4 / name
 
-        if self.config.sparse_IRT4_number > 0:
+        if self.config.sparse_IRT4_number > 0 or self.in_test:
             return read_image(str(pathIRT4), ImageReadMode.GRAY).to(device=self.device, dtype=self.tensor_dtype) / 255.0
         elif self.config.simulation == 'DPM':
             return read_image(str(pathDPM), ImageReadMode.GRAY).to(device=self.device, dtype=self.tensor_dtype) / 255.0

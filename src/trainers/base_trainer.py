@@ -6,7 +6,10 @@ from tqdm import tqdm
 from src.trainers.early_stopping import EarlyStopping
 
 class BaseTrainer:
-    def __init__(self, model, device, config):
+    def __init__(self, model, device, config = None):
+        """
+        Note: Config is not required only during testing
+        """
         self.model = model.to(device)
         self.device = device
         self.config = config

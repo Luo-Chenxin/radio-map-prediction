@@ -3,24 +3,27 @@ import csv
 from datetime import datetime
 
 def get_dataset_field(
-        cars:bool, 
+        carsInput:bool, 
+        carsSimulation:bool, 
         missing:bool, 
         samples:bool, 
         irt4_adapter:bool) -> str:
     """
     get train_set field or test_set field for append_to_csv function
     Parameter:
-      cars: bool, input cars or not
+      carsInput: bool, input cars or not
+      carsSimulation: bool, use cars in simulation or not
       missing: bool, some buildings are missing or not
       samples: bool, input samples or not
       irt4_adapter: bool, use some IRT4 simulation targets to adapt or not.
     """
-    carsStr = "Cars" if cars else "NoCars"
+    carsInputStr = "CarsIn" if carsInput else "NoCarsIn"
+    carsSimulationStr = "CarsSim" if carsSimulation else "NoCarsSim"
     missingStr = "Missing" if missing else "Complete"
     samplesStr = "Samples" if samples else "Clean"
     irt4_adapterStr = "IRT4" if irt4_adapter else "NoIRT4"
 
-    return f"{carsStr}, {missingStr}, {samplesStr}, {irt4_adapterStr}"
+    return f"{carsInputStr}|{carsSimulationStr}|{missingStr}|{samplesStr}|{irt4_adapterStr}"
 
 
 def append_record(file_path, model_arch, train_set, test_set, metrics):

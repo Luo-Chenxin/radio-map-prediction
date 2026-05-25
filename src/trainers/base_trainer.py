@@ -1,5 +1,7 @@
 import torch
+import numpy as np
 import logging
+import time
 from tqdm import tqdm
 from src.trainers.early_stopping import EarlyStopping
 
@@ -59,17 +61,31 @@ class BaseTrainer:
             out_dir=self.config.out_dir
         )
  
-    def _train_step(self, batch, batch_idx):
+    def _train_step(self, batch, batch_idx) -> torch.Tensor:
         """
         [Hook Function] Subclasses must override this method to define the specific logic for a single training iteration
+        Returns:
+          loss: torch.Tensor
         """
         raise NotImplementedError("Subclasses must implement the _train_step method")
     
-    def _val_step(self, batch, batch_idx):
+    def _val_step(self, batch, batch_idx) -> float:
         """
         [Hook Function] Subclasses must override this method to define the specific logic for a single validation iteration
+        Returns:
+          loss: float
         """
         raise NotImplementedError("Subclasses must implement the _val_step method")
+
+    def _test_step(self, batch, batch_idx) -> tuple[np.ndarray, np.ndarray, int]:
+        """
+        [Hook Function] Subclasses must override this method to define the specific logic for a single test iteration
+        Returns: 
+          target: numpy.ndarray
+          prediction: numpy.ndarray
+          samples_size: int
+        """
+        raise NotImplementedError("Subclasses must implement the _test_step method")
 
     def _train_one_epoch(self, loader):
         """
@@ -105,14 +121,51 @@ class BaseTrainer:
         for batch_idx, batch in enumerate(pbar):
             loss = self._val_step(batch, batch_idx)
 
-            total_loss += loss.item()
+            total_loss += loss
             pbar.set_postfix({"avg_loss": f"{total_loss / (batch_idx + 1):.4f}"})
             
         return total_loss / len(loader)
 
-    # [Main Loop] The master switch that starts training
+    @torch.no_grad()
+    def _test_one_epoch(self, loader):
+        """
+        General one epoch testing process
+        """
+
+        self.model.eval()
+        all_targs_list = []
+        all_preds_list = []
+        total_samples = 0
+        inference_time = 0.0
+        pbar = tqdm(loader, desc="Testing", leave=False)
+        
+        for batch_idx, batch in enumerate(pbar):
+            if self.device.type == 'cuda':
+                torch.cuda.synchronize()
+            start_batch = time.time()
+
+            target, prediction, samples_size = self._test_step(batch, batch_idx)
+
+            if self.device.type == 'cuda':
+                torch.cuda.synchronize()
+            end_batch = time.time()
+
+            inference_time += (end_batch - start_batch)
+            total_samples += samples_size
+
+            all_targs_list.append(target)
+            all_preds_list.append(prediction)
+
+        all_targs = np.concatenate(all_targs_list, axis=0)
+        all_preds = np.concatenate(all_preds_list, axis=0)
+            
+        return all_targs, all_preds, total_samples, inference_time
+
     def fit(self, train_loader, val_loader):
-        self.logger.info(f"Start Training | Device: {self.device}")
+        """
+        [Main Loop] The master switch that starts training
+        """
+        self.logger.info(f"Start Training... | Device: {self.device}")
 
         for epoch in range(self.config.epoch):
 
@@ -131,3 +184,39 @@ class BaseTrainer:
                 break
 
         self.logger.info("Training Finish")
+    
+    @torch.no_grad()
+    def test(self, test_loader):
+        """
+        [Main Function] The master switch that starts testing; calculate MSE, NMSE and inferring time per sample.
+        """
+        self.logger.info("Start Testing...")
+
+        all_targs, all_preds, total_samples, total_time = self._test_one_epoch(test_loader)
+
+        time_per_sample = total_time / total_samples if total_samples > 0 else 0
+
+        all_targs_flat = all_targs.flatten()
+        all_preds_flat = all_preds.flatten()
+
+        mse = np.mean((all_targs_flat - all_preds_flat) ** 2)
+
+        mean_square_targ = np.mean(all_targs_flat ** 2)
+        nmse = mse / mean_square_targ
+
+        metrics = {
+            "MSE": float(mse),
+            "NMSE": float(nmse),
+            "Time_Per_Sample_Sec": float(time_per_sample),
+        }
+        
+        self.logger.info("Test Finish.")
+        self.logger.info(
+            f"[Test Results] -> "
+            f"MSE: {metrics['MSE']:.4f} | "
+            f"NMSE: {metrics['NMSE']:.4f} | "
+            f"Total Samples: {total_samples} | "
+            f"Time/Sample: {metrics['Time_Per_Sample_Sec'] * 1000:.2f} ms"
+        )
+        
+        return metrics

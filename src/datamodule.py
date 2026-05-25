@@ -44,9 +44,6 @@ class RadioSeerDataModule:
                 for tx_idx in range(MAX_TX_IRT4): 
                     idx = map_idx * max_tx + tx_idx
                     test_indices.append(idx)
-
-        # Shuffle train dataset
-        train_indices = [train_indices[i] for i in torch.randperm(len(train_indices), generator=g).tolist()]
         
         self.train_dataset = Subset(dataset_class(config_data, seed), train_indices)
         self.val_dataset = Subset(dataset_class(config_data, seed), val_indices)
@@ -56,6 +53,7 @@ class RadioSeerDataModule:
         return DataLoader(
         self.train_dataset, 
         batch_size=self.config.train_batch_size,
+        shuffle= True,
         num_workers=self.config.num_workers)
     
     def get_val_dataloader(self):

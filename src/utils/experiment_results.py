@@ -2,18 +2,23 @@ from pathlib import Path
 import csv
 from datetime import datetime
 
-def get_trainset_field(config) -> str:
+def get_dataset_field(config) -> str:
     """
-    Get train_set field for append_to_csv function
+    Get dataset field for append_to_csv function
     """
-    simulationStr = config.simulation
-    carsInputStr = "CarsIn" if config.cars_input else "NoCarsIn"
-    carsSimulationStr = "CarsSim" if config.cars_simulation else "NoCarsSim"
-    missingStr = "Missing" if config.city_map != "complete" else "Complete"
-    samplesStr = "Samples" if config.samples_number > 0 else "Clean"
-    irt4_adapterStr = "IRT4" if config.sparse_IRT4_number else "NoIRT4"
+    simulationStr = config.simulation if config.sparse_IRT4_number == 0 else f"IRT4_Adapter_{config.sparse_IRT4_number}" 
+    carsStr = "Cars_Exist" if config.cars_exist else "No_Cars_Exist"
+    if config.city_map == 'complete':
+        cityMapStr = 'Complete_City_Map'
+    elif config.city_map == 'missing':
+        cityMapStr = f'City_Map_With_{config.missing}_Missing_Buildings'
+    elif config.city_map == 'rand':
+        cityMapStr = 'City_Map_With_Random_Missing_Buildings'
+    else: 
+        cityMapStr = f'Unknown_{config.city_map}'
+    samplesStr = f"Input_Samples_{config.samples_number}"
 
-    return f"{simulationStr}|{carsInputStr}|{carsSimulationStr}|{missingStr}|{samplesStr}|{irt4_adapterStr}"
+    return f"{simulationStr}|{carsStr}|{cityMapStr}|{samplesStr}"
 
 
 def append_record(file_path, model_arch, train_set, test_set, metrics):

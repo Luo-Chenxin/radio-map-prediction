@@ -1,33 +1,61 @@
 import torch
 from torch.utils.data import DataLoader, Subset
 
+MAX_TX_IRT4 = 2
+
 class RadioSeerDataModule:
-    def __init__(self, dataset_class, seed, config) -> None:
-        # Calculate total length and slice index. Get the total length using a temporary dataset
-        _tmp_dataset = dataset_class(config, seed)
-        total_len = len(_tmp_dataset)
+    def __init__(self, dataset_class, config_load, config_data, seed) -> None:
+        # Divide map_idx into groups (ensuring that the three map_idx values ​​do not overlap).
+        self.config = config_load
+        total_maps = config_data.maps_number
+        train_map_size = int(config_load.train_ratio * total_maps)
+        val_map_size = int(config_load.val_ratio * total_maps)
         
-        train_size = int(config.train_ratio * total_len)
-        val_size = int(config.val_ratio * total_len)
+        # Use seed to ensure the reproducibility of map partitioning.
+        g = torch.Generator().manual_seed(seed)
+        shuffled_maps = torch.randperm(total_maps, generator=g).tolist()
         
-        # Generating index list under random permutations
-        generator = torch.Generator().manual_seed(seed)
-        indices = torch.randperm(total_len, generator=generator).tolist()
-        train_indices = indices[:train_size]
-        val_indices = indices[train_size:train_size + val_size]
-        test_indices = indices[train_size + val_size:]
+        train_maps = set(shuffled_maps[:train_map_size])
+        val_maps = set(shuffled_maps[train_map_size:train_map_size + val_map_size])
+        test_maps = set(shuffled_maps[train_map_size + val_map_size:])
         
-        # Instantiate independent Datasets for different stages and bind the corresponding indexes through Subsets.
-        self.train_dataset = Subset(dataset_class(config, seed), train_indices)
-        self.val_dataset = Subset(dataset_class(config, seed), val_indices)
-        self.test_dataset = Subset(dataset_class(config, seed, True), test_indices)
-        self.config = config
+        #idx = map_idx * transmitters_number + tx_idx
+        train_indices = []
+        val_indices = []
+        test_indices = []
+        
+        max_tx = config_data.transmitters_number 
+        
+        for map_idx in range(total_maps):
+            if map_idx in train_maps:
+                # Train: tx_idx is in [0,max_tx)
+                for tx_idx in range(max_tx):
+                    idx = map_idx * max_tx + tx_idx
+                    train_indices.append(idx)
+                    
+            elif map_idx in val_maps:
+                # Val: tx_idx is in [0,max_tx)
+                for tx_idx in range(max_tx):
+                    idx = map_idx * max_tx + tx_idx
+                    val_indices.append(idx)
+                    
+            elif map_idx in test_maps:
+                # Test: tx_idx is in [0,2)
+                for tx_idx in range(MAX_TX_IRT4): 
+                    idx = map_idx * max_tx + tx_idx
+                    test_indices.append(idx)
+
+        # Shuffle train dataset
+        train_indices = [train_indices[i] for i in torch.randperm(len(train_indices), generator=g).tolist()]
+        
+        self.train_dataset = Subset(dataset_class(config_data, seed), train_indices)
+        self.val_dataset = Subset(dataset_class(config_data, seed), val_indices)
+        self.test_dataset = Subset(dataset_class(config_data, seed, is_test=True), test_indices)
 
     def get_train_dataloader(self):
         return DataLoader(
         self.train_dataset, 
-        batch_size=self.config.train_batch_size, 
-        shuffle=True, 
+        batch_size=self.config.train_batch_size,
         num_workers=self.config.num_workers)
     
     def get_val_dataloader(self):

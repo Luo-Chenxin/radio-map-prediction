@@ -2,9 +2,9 @@ from pathlib import Path
 import csv
 from datetime import datetime
 
-def get_dataset_field(config) -> str:
+def get_dataset_desc(config) -> str:
     """
-    Get dataset field for append_to_csv function
+    Get dataset description for append_record function
     """
     simulationStr = config.simulation if config.sparse_IRT4_number == 0 else f"IRT4_Adapter_{config.sparse_IRT4_number}" 
     carsStr = "Cars_Exist" if config.cars_exist else "No_Cars_Exist"
@@ -21,24 +21,23 @@ def get_dataset_field(config) -> str:
     return f"{simulationStr}|{carsStr}|{cityMapStr}|{samplesStr}"
 
 
-def append_record(file_path, model_arch, train_set, test_set, metrics):
+def append_record(file_path, model_arch, dataset_desc, metrics):
     """
     Add a record to the CSV file
     
     Parameter:
       file_path: str, path to the CSV file
       model_arch: str, model architecture name
-      train_set: str, training set field.
+      dataset_des: str, dataset description field
       test_set: str, testing set field.
-      metrics: dict, test results (include MSE, NMSE, Time_Per_Sample_Sec)
+      metrics: dict, test results (include RMSE, NMSE, Time_Per_Sample_Sec)
     """
     
     # Define headers
     headers = [
         'Model_Architecture', 
-        'Train_Set_Desc', 
-        'Test_Set_Desc', 
-        'MSE', 
+        'Dataset_Desc',
+        'RMSE', 
         'NMSE', 
         'Time_Per_Sample_Sec', 
         'Recording_Time'
@@ -48,9 +47,8 @@ def append_record(file_path, model_arch, train_set, test_set, metrics):
 
     row_data = [
         model_arch,
-        train_set,
-        test_set,
-        metrics['MSE'],
+        dataset_desc,
+        metrics['RMSE'],
         metrics['NMSE'],
         metrics['Time_Per_Sample_Sec'],
         recording_time

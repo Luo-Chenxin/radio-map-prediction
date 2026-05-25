@@ -194,7 +194,7 @@ class BaseTrainer:
     @torch.no_grad()
     def test(self, test_loader):
         """
-        [Main Function] The master switch that starts testing; calculate MSE, NMSE and inferring time per sample.
+        [Main Function] The master switch that starts testing; calculate RMSE, NMSE and inferring time per sample.
         """
         self.logger.info("Start Testing...")
 
@@ -206,12 +206,13 @@ class BaseTrainer:
         all_preds_flat = all_preds.flatten()
 
         mse = np.mean((all_targs_flat - all_preds_flat) ** 2)
+        rmse = np.sqrt(mse)
 
         mean_square_targ = np.mean(all_targs_flat ** 2)
         nmse = mse / mean_square_targ
 
         metrics = {
-            "MSE": float(mse),
+            "RMSE": float(rmse),
             "NMSE": float(nmse),
             "Time_Per_Sample_Sec": float(time_per_sample),
         }
@@ -219,7 +220,7 @@ class BaseTrainer:
         self.logger.info("Test Finish.")
         self.logger.info(
             f"[Test Results] -> "
-            f"MSE: {metrics['MSE']:.4f} | "
+            f"RMSE: {metrics['RMSE']:.4f} | "
             f"NMSE: {metrics['NMSE']:.4f} | "
             f"Total Samples: {total_samples} | "
             f"Time/Sample: {metrics['Time_Per_Sample_Sec'] * 1000:.2f} ms"

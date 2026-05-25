@@ -12,7 +12,7 @@ def train_radio_unet_clean_DPM():
     make_output_dir(config)
     device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
 
-    datamodule = RadioSeerDataModule(RadioSeerDataset, config.seed, config.load)
+    datamodule = RadioSeerDataModule(RadioSeerDataset, config.load, config.data, config.seed)
     train_loader = datamodule.get_train_dataloader()
     val_loader = datamodule.get_val_dataloader()
 

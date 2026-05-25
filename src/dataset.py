@@ -5,10 +5,11 @@ from torch.utils.data import Dataset
 from torchvision.io import read_image, ImageReadMode
 
 class RadioSeerDataset(Dataset):
-    def __init__(self, config, seed):
+    def __init__(self, config, seed, is_test=False):
         self.config = config
         self.device = 'cpu'
         self.tensor_dtype = torch.float32
+        self.is_test = is_test
         np.random.seed(seed)
 
     def __len__(self):
@@ -37,7 +38,7 @@ class RadioSeerDataset(Dataset):
                 samples_gain = self._generate_samples(gain)
                 inputs = torch.cat([inputs, samples_gain], dim=0)
 
-        if self.config.cars_input:
+        if self.config.cars_exist:
             cars = self._load_cars(map_idx)
             inputs = torch.cat([inputs, cars], dim=0)
         
@@ -72,14 +73,14 @@ class RadioSeerDataset(Dataset):
         path = Path(self.config.root_dir)
         name = f"{map_idx}_{tx_idx}.png"
 
-        pathDPM = Path(self.config.DPM_cars_dir) if self.config.cars_simulation else Path(self.config.DPM_dir)
+        pathDPM = Path(self.config.DPM_cars_dir) if self.config.cars_exist else Path(self.config.DPM_dir)
         pathDPM = path / pathDPM / name
-        pathIRT2 = Path(self.config.IRT2_cars_dir) if self.config.cars_simulation else Path(self.config.IRT2_dir)
+        pathIRT2 = Path(self.config.IRT2_cars_dir) if self.config.cars_exist else Path(self.config.IRT2_dir)
         pathIRT2 = path / pathIRT2 / name
-        pathIRT4 = Path(self.config.IRT4_cars_dir) if self.config.cars_simulation else Path(self.config.IRT4_dir)
+        pathIRT4 = Path(self.config.IRT4_cars_dir) if self.config.cars_exist else Path(self.config.IRT4_dir)
         pathIRT4 = path / pathIRT4 / name
 
-        if self.config.sparse_IRT4_number > 0 or self.in_test:
+        if self.config.sparse_IRT4_number > 0 or self.is_test:
             return read_image(str(pathIRT4), ImageReadMode.GRAY).to(device=self.device, dtype=self.tensor_dtype) / 255.0
         elif self.config.simulation == 'DPM':
             return read_image(str(pathDPM), ImageReadMode.GRAY).to(device=self.device, dtype=self.tensor_dtype) / 255.0

@@ -5,7 +5,7 @@ def get_radio_unet_model(config):
     in_channels = 1 + 1
     if config.samples_number > 0:
         in_channels = in_channels + 1
-    if config.cars_input:
+    if config.cars_exist:
         in_channels = in_channels + 1
     
     first_out_channels = 6 if in_channels <= 3 else 10

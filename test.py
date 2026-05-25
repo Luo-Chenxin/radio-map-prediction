@@ -16,8 +16,7 @@ def test_radio_unet_clean_DPM():
     make_output_dir(config)
     device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
 
-    dataset = RadioSeerDataset(config=config.data, seed=config.seed)
-    datamodule = RadioSeerDataModule(dataset, config.seed, config.load)
+    datamodule = RadioSeerDataModule(RadioSeerDataset, config.seed, config.load)
     test_loader = datamodule.get_test_dataloader()
 
     model = get_radio_unet_model(config.data)

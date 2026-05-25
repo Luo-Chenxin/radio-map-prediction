@@ -17,7 +17,7 @@ Thumbs.db
 
 *.log
 *.tmp
-debug_*.py
+debug_*.*
 *.sif
 *.out
 *.err

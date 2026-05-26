@@ -1,9 +1,8 @@
 from pathlib import Path
 import csv
 from datetime import datetime
-from src.models.radio_unet import RadioUnet
 
-def get_radiounet_model(config):
+def get_radiounet_model(config, model_class):
     in_channels = 1 + 1
     if config.samples_number > 0:
         in_channels = in_channels + 1
@@ -11,8 +10,8 @@ def get_radiounet_model(config):
         in_channels = in_channels + 1
     
     first_out_channels = 6 if in_channels <= 3 else 10
-    model = RadioUnet(in_channels, first_out_channels)
-    return model
+    return model_class(in_channels, first_out_channels)
+
 
 def get_dataset_desc(config) -> str:
     """

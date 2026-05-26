@@ -11,7 +11,7 @@ class BaseTrainer:
         """
         Note: Config is not required only during testing
         """
-        self.model = model.to(device)
+        self.model = model
         self.device = device
         self.id = id
         self.config = config
@@ -34,14 +34,17 @@ class BaseTrainer:
         [Hook Function] Subclasses can override this method to set own logger function
         """
         log_file = self.out_dir / f"{self.id}.log"
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s',
-            handlers=[
-                logging.FileHandler(log_file, mode='w', encoding='utf-8'),
-            ]
-        )
-        self.logger = logging.getLogger(__name__)
+        logger_name = f"{__name__}.{self.id}"
+        self.logger = logging.getLogger(logger_name)
+
+        if not self.logger.handlers:
+            self.logger.setLevel(logging.INFO)
+            file_handler = logging.FileHandler(log_file, mode='w', encoding='utf-8')
+            file_handler.setLevel(logging.INFO)
+            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+            file_handler.setFormatter(formatter)
+            self.logger.addHandler(file_handler)
+            self.logger.propagate = False
     
     def _set_criterion(self):
         """
@@ -53,7 +56,8 @@ class BaseTrainer:
         """
         [Hook Function] Subclasses can override this method to set own optimizer function
         """
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config.learning_rate)
+        trainable_params = filter(lambda p: p.requires_grad, self.model.parameters())
+        self.optimizer = torch.optim.Adam(trainable_params, lr=self.config.learning_rate)
 
     def _set_scheduler(self):
         """

@@ -27,7 +27,7 @@ def train_radiounet_dpm_nocars_missing0_samples0():
     trainer.fit(train_loader, val_loader)
 
 def test_radiounet(config_path):
-    configPath = Path(RADIOUNET_DPM_NOCARS_MISSING0_SAMPLES0)
+    configPath = Path(config_path)
     id = configPath.stem
     config = load_config_strict(configPath)
     device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
@@ -48,4 +48,4 @@ def test_radiounet(config_path):
     append_record(EXPERIMENT_RESULTS, "RadioUnet", dataset_field, metrics)
 
 if __name__ == "__main__":
-    train_radiounet_dpm_nocars_missing0_samples0()
+    test_radiounet(RADIOUNET_DPM_NOCARS_MISSING0_SAMPLES0)

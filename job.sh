@@ -21,4 +21,4 @@ module load apptainer
 # --nv：Enable NVIDIA graphics card support
 # --bind：Mount the host machine's current directory (.) to the /workspace directory inside the container.
 apptainer exec --nv --bind .:/workspace --pwd /workspace rmp_env.sif \
-    python train.py
+    python job.py

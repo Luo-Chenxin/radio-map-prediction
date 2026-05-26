@@ -3,8 +3,8 @@
 #SBATCH --partition=3090                         # Requested compute partition
 #SBATCH --gres=gpu:1                             # Request 1 GPU
 #SBATCH --time=03:40:00                          # Maximum task runtime
-#SBATCH --output=outputs/%x_%j.out               # Standard output log (%x: job name | %j: job ID)
-#SBATCH --error=outputs/%x_%j.err                # Error log
+#SBATCH --output=outputs/%x_%j_out.log           # Standard output log (%x: job name | %j: job ID)
+#SBATCH --error=outputs/%x_%j_err.log            # Error log
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=chenxin.luo@ip-paris.fr
 

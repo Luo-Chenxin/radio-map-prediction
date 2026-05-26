@@ -2,7 +2,6 @@ import yaml
 from pydantic import BaseModel, ValidationError, Field, model_validator
 from typing import Tuple
 from typing_extensions import Self
-import sys
 
 class _LoadConfig(BaseModel):
     train_ratio: float = Field(gt=0.0, lt=1.0, description="Range is (0.0, 1.0)")
@@ -32,7 +31,6 @@ class _TrainConfig(BaseModel):
     scheduler: _SchedulerConfig
     early_stop: _EarlyStopConfig
     out_dir: str
-    log_file: str
 
 _ImgSize = Tuple[int, int]
 
@@ -98,16 +96,8 @@ def load_config_strict(config_path):
     """
     Load, check and return the contents of the YAML configuration file.
     """
-    try:
-        with open(file=config_path, mode='r', encoding='utf-8') as f:
-            raw_config = yaml.safe_load(f)
+    with config_path.open(mode='r', encoding='utf-8') as f:
+        raw_config = yaml.safe_load(f)
     
-        config = _Config(**raw_config) 
-        return config
-    except ValidationError as e:
-        print("\n[Configuration verification failed] Please check the following configuration items:", file=sys.stderr)
-        for error in e.errors():
-            field = " -> ".join(str(x) for x in error['loc'])
-            msg = error['msg']
-            print(f"  - Field [{field}]: {msg}", file=sys.stderr)
-        sys.exit(1)
+    config = _Config(**raw_config) 
+    return config

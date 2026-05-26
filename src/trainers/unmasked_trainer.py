@@ -7,8 +7,8 @@ class UnmaskedTrainer(BaseTrainer):
     This Trainer is used for both RadioUnet and RadioWnet without mask.
     """
     
-    def __init__(self, model, device, config):
-        super().__init__(model, device, config)
+    def __init__(self, model, device, id, config):
+        super().__init__(model, device, id, config)
     
     def _train_step(self, batch, _) -> Tensor:
         inputs, targets = batch

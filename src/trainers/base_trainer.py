@@ -3,32 +3,42 @@ import numpy as np
 import logging
 import time
 from tqdm import tqdm
+from pathlib import Path
 from src.trainers.early_stopping import EarlyStopping
 
 class BaseTrainer:
-    def __init__(self, model, device, config = None):
+    def __init__(self, model, device, id, config):
         """
         Note: Config is not required only during testing
         """
         self.model = model.to(device)
         self.device = device
+        self.id = id
         self.config = config
 
+        self._make_output_dir()
         self._set_logger()
         self._set_criterion()
         self._set_optimizer()
         self._set_scheduler()
         self._set_early_stopping()
     
+    
+    def _make_output_dir(self):
+        self.out_dir = Path(self.config.out_dir)
+        self.model_dir = self.out_dir / self.id
+        self.model_dir.mkdir(parents=True, exist_ok=True)
+    
     def _set_logger(self):
         """
         [Hook Function] Subclasses can override this method to set own logger function
         """
+        log_file = self.out_dir / f"{self.id}.log"
         logging.basicConfig(
             level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s',
             handlers=[
-                logging.FileHandler(self.config.log_file, mode='w'),
+                logging.FileHandler(log_file, mode='w', encoding='utf-8'),
             ]
         )
         self.logger = logging.getLogger(__name__)
@@ -61,7 +71,7 @@ class BaseTrainer:
         self.early_stopping = EarlyStopping(
             patience=self.config.early_stop.patience, 
             delta=self.config.early_stop.delta, 
-            out_dir=self.config.out_dir
+            out_dir=self.model_dir
         )
  
     def _train_step(self, batch, batch_idx) -> torch.Tensor:

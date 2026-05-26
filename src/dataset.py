@@ -103,7 +103,7 @@ class RadioSeerDataset(Dataset):
         w_coords = perm % W
         mask[h_coords, w_coords] = 1.0
 
-        return mask, h_coords, w_coords
+        return mask.unsqueeze(0), h_coords, w_coords
     
     def _generate_samples(
         self, 

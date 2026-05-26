@@ -9,9 +9,26 @@ from src.trainers.early_stopping import BEST_MODEL_PARTERN
 
 EXPERIMENT_RESULTS = 'experiment_results.csv'
 RADIOUNET_DPM_NOCARS_MISSING0_SAMPLES0 = 'config/radiounet_dpm_nocars_missing0_samples0.yaml'
+RADIOWNET_DPM_NOCARS_MISSING0_SAMPLES0 = 'config/radiownet_dpm_nocars_missing0_samples0.yaml'
 
 def train_radiounet_dpm_nocars_missing0_samples0():
     configPath = Path(RADIOUNET_DPM_NOCARS_MISSING0_SAMPLES0)
+    id = configPath.stem
+    config = load_config_strict(configPath)
+    device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
+
+    datamodule = RadioSeerDataModule(RadioSeerDataset, config.load, config.data, config.seed)
+    train_loader = datamodule.get_train_dataloader()
+    val_loader = datamodule.get_val_dataloader()
+
+    model = get_radiounet_model(config.data)
+
+    trainer = UnmaskedTrainer(model, device, id, config.train)
+
+    trainer.fit(train_loader, val_loader)
+
+def train_radiownet_dpm_nocars_missing0_samples0():
+    configPath = Path(RADIOWNET_DPM_NOCARS_MISSING0_SAMPLES0)
     id = configPath.stem
     config = load_config_strict(configPath)
     device = torch.device('cuda' if torch.cuda.is_available() else "cpu")

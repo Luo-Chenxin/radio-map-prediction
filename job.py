@@ -58,18 +58,18 @@ def run_experiment(config_path, model_class, trainer_class, pretrained_path=None
 
 
 if __name__ == "__main__":
-    CFG_UNET = 'config/radiounet_dpm_nocars_missing0_samples0.yaml'
+    # CFG_UNET = 'config/radiounet_dpm_nocars_missing0_samples0.yaml'
     CFG_WNET = 'config/radiownet_dpm_nocars_missing0_samples0.yaml'
     CKPT_UNET = 'outputs/radiounet_dpm_nocars_missing0_samples0/best_model.pt'
 
     # 1. Test the trained RadioUnet
-    run_experiment(
-        config_path=CFG_UNET, 
-        model_class=RadioUnet, 
-        trainer_class=UnmaskedTrainer, 
-        pretrained_path=CKPT_UNET, 
-        mode='test'
-    )
+    # run_experiment(
+    #     config_path=CFG_UNET, 
+    #     model_class=RadioUnet, 
+    #     trainer_class=UnmaskedTrainer, 
+    #     pretrained_path=CKPT_UNET, 
+    #     mode='test'
+    # )
     
     # 2. Train and Test RadioWnet
     run_experiment(

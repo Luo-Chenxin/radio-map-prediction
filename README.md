@@ -23,3 +23,63 @@ Compared to the original RadioUNet repository, we made several important updates
   * **IRT4 Focus:** This project only supports accuracy testing on the IRT4 simulation results (which represents realistic measurements), as other simulations are not needed as testing standards for our current goals.
 * **Cars Information:** In original project, we've already known that cars presence affects model performance. So, in this project, if cars exist in the simulation, the cars' data will be fed into the model as an extra feature channel. You can turn this on or off in the configuration file using `cars_exist: true/false`.
 * **Accurate Inference Timing:** We added `torch.cuda.synchronize()` for GPU devices. This ensures that the recorded inference time is precise when running on CUDA. (The code still supports running on CPU).
+
+## Environment Setup
+
+You can set up the running environment in two ways: using Conda (for local/GPU/CPU runs) or using Apptainer (for the Telecom Paris cluster).
+
+### Option A: Local Setup (Conda)
+If you run the code locally, you can use the provided `environment.yml` file. 
+* **Note:** This file contains all necessary libraries. If you want to use a GPU, please make sure you have CUDA 13.0.0 or above installed on your system.
+
+To create the environment, run:
+```bash
+conda env create -f environment.yml
+```
+
+*The virtual environment name is **rmp**.*
+
+### Option B: Cluster Setup (Apptainer / Singularity)
+
+If you can run experiments on the **Telecom Paris cluster** ([Website](https://computing.telecom-paris.fr/)), you can use the `rmp_env.def` file to build a `.sif` image.
+
+* **Important:** You do not have enough permissions to build the image directly on the cluster. You must build the image on your local machine first, and then upload the `.sif` file to the cluster.
+* **Base Image:** The image is built from `nvidia/cuda:13.0.0-cudnn-devel-ubuntu24.04`. The final image size is large (close to 10GB).
+
+Use the standard command to build the image locally:
+
+```bash
+apptainer build rmp_env.sif rmp_env.def
+```
+
+## Data Preparation
+
+### Download Data
+
+You can find the download links and dataset information here:
+
+* **Dataset Download:** [RadioMapSeer Dataset](https://radiomapseer.github.io/)
+* **More Information & Tips:** [RadioUNet Reproduction Tips](https://my-website-five-gray-23.vercel.app/docs/radiounet#reproduction-tips)
+
+### Directory Structure
+
+After downloading the dataset, please extract the files. We recommend placing the extracted folders directly inside a directory named `data` in the project root folder.
+
+Your project directory should look like this:
+
+```text
+your-project/
+├── config
+├── data/
+│   ├── antenna/
+│   ├── gain/
+│   ├── png/
+│   ├── polygon/
+│   └── dataset.csv
+├── src
+├── .env
+└── ... (other files)
+
+```
+
+*Note: Please check your configuration file to ensure the data paths match this structure.*

@@ -68,7 +68,7 @@ After downloading the dataset, please extract the files. We recommend placing th
 Your project directory should look like this:
 
 ```text
-your-project/
+radio-map-prediction/
 ├── config
 ├── data/
 │   ├── antenna/
@@ -83,3 +83,71 @@ your-project/
 ```
 
 *Note: Please check your configuration file to ensure the data paths match this structure.*
+
+## Configuration Guide
+
+All parameters for training, testing, and data processing are managed in YAML configuration files. 
+
+### Configuration Files Management
+
+We recommend putting all your configuration files inside the `config/` folder. To keep things organized, please name your configuration files using this clear format:
+`{architecture}_{simulation_type}_{cars}_{map_type}_{samples}.yaml`
+
+The project already includes some example configuration files in the `config/` directory:
+```text
+radio-map-prediction/
+├── config/
+│   ├── radiounet_dpm_nocars_missing0_samples0.yaml
+│   ├── radiownet_dpm_nocars_missing0_samples0.yaml
+│   └── ... (more examples in the future)
+└── ... (other directories and files)
+
+```
+
+> **Note on Model Architecture Switching:** Currently, changing the network architecture is still hard-coded. You need to change the model class manually in the main entry `job.py` file. In the future, we plan to update the code so you can switch architectures directly inside the configuration file.
+
+
+### Key Parameter Groups
+
+#### 1. Global Setting
+* `seed`: Random seed to ensure dataset splitting and experiment result can be exactly reproduced.
+
+#### 2. Load Configuration (`load:`)
+* `train_ratio` & `val_ratio`: Ratios for splitting the city maps automatically. For example, if `maps_number: 700`, `train_ratio: 0.7`, and `val_ratio: 0.15`:
+  * **Train Set:** $700 \times 0.7 = 490$ random maps.
+  * **Validation Set:** $700 \times 0.15 = 105$ random maps.
+  * **Test Set:** The remaining maps ($700 - 490 - 105 = 105$ maps).
+* `train_batch_size` / `val_batch_size` / `test_batch_size`: Batch sizes for training, validation, and testing phases.
+* `num_workers`: Number of subprocesses to use for data loading.
+
+#### 3. Train Configuration (`train:`)
+* `epoch`: Total number of training epochs.
+* `learning_rate`: Initial learning rate for the optimizer.
+* `scheduler`: Learning rate decay settings. It decreases the learning rate by multiplying `gamma` (attenuation ratio) every `step_size` epochs.
+* `early_stop`: Settings to stop training early if the validation loss stops improving. The model must improve by at least `delta` within the `patience` number of epochs.
+* `out_dir`: The directory path where the trained models, logs, and results are saved.
+
+#### 4. Data Configuration (`data:`)
+* **Directory Paths:**
+  * `root_dir`: The root folder of the dataset.
+  * `DPM_dir` / `DPM_cars_dir` / `IRT2_dir` / `IRT2_cars_dir` / `IRT4_dir` / `IRT4_cars_dir`: Directories containing simulation gain data with or without cars.
+  * `buildings_complete_dir` / `buildings_missing_dir` / `antennas_dir` / `cars_dir`: Directories containing PNG maps for city buildings, antenna positions, and car positions.
+* **Simulation & Map Settings:**
+  * `simulation`: Choose the simulation mode (`DPM`, `IRT2`, or `rand`). *Note:* `rand` mode mixes DPM and IRT2 based on the `IRT2_weight`.
+  * `city_map`: Choose the type of city map (`complete`, `missing`, or `rand`). 
+  * `missing`: The number of missing buildings (Range: `[1, 4]`). *Note:* This parameter **only works** when `city_map` is set to `"missing"`.
+* **Advanced Dataset Settings:**
+  * `sparse_IRT4_number`: Number of sparse IRT4 points on the map (Range: `[0, total_img_size)`). 
+    * Important Logic: If `sparse_IRT4_number > 0`, the code **automatically forces** the system to switch to **IRT4 simulation mode** for training and validation targets, and the `simulation` setting above will be ignored.
+  * `samples_number`: Number of extra simulation gain samples to input. The range depends on whether `sparse_IRT4_number` is 0 or not.
+  * `cars_exist`: Set to `true` or `false`. If `true`, cars information is added into the model as an extra feature channel.
+  * `maps_number`: Total number of city maps to use (Range: `[1, 700]`).
+  * `transmitters_number`: The number of transmitters per map. 
+    * Train/Val vs. Test: This configuration **only applies to Training and Validation sets**. For the **Test set**, the code hardcodes the transmitter number to * **2** because the IRT4 simulation in dataset only supports a maximum of 2 transmitters. 
+    * Conflict Warning: If `sparse_IRT4_number > 0`, `transmitters_number` must be between `[1, 2]`. If you set it to a large number like `80`, the code will throw a configuration error and stop.
+  * `threshold`: Pathloss threshold filter value (Range: `[0, 1)`).
+  * `img_size`: The resolution of input images, default is `[256, 256]`.
+
+### Configuration Validation
+
+You do not need to worry about making mistakes in the configuration file. The project includes a validation script at `src/utils/config.py`. When you start the program, it will automatically check your YAML configuration file. If there are conflicting or incorrect settings, the system will print a clear error message to remind you what to fix.

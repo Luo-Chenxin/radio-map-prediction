@@ -24,6 +24,17 @@ Compared to the original RadioUNet repository, we made several important updates
 * **Cars Information:** In original project, we've already known that cars presence affects model performance. So, in this project, if cars exist in the simulation, the cars' data will be fed into the model as an extra feature channel. You can turn this on or off in the configuration file using `cars_exist: true/false`.
 * **Accurate Inference Timing:** We added `torch.cuda.synchronize()` for GPU devices. This ensures that the recorded inference time is precise when running on CUDA. (The code still supports running on CPU).
 
+## Roadmap / TODO List
+
+Here are the planned features and updates for this project. Feel free to open an issue if you want to contribute!
+
+* **Configuration & CLI Improvements**
+  - [ ] Move model architecture switching from hard-coded Python variables into the configuration file.
+  - [ ] Add command-line arguments (CLI) support (e.g., `python main.py --config config/config.yaml --mode train`).
+
+* **Model Architectures Exploration**
+  - [ ] Integrate **Transformer-based** architectures for radio map prediction.
+
 ## Environment Setup
 
 You can set up the running environment in two ways: using Conda (for local/GPU/CPU runs) or using Apptainer (for the Telecom Paris cluster).

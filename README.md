@@ -18,6 +18,9 @@ A deep learning benchmark repository for evaluating and comparing different netw
 6. [How to Run](#6-how-to-run)
    - [Run on a Local Machine](#run-on-a-local-machine)
    - [Run on the Telecom Paris Cluster](#run-on-the-telecom-paris-cluster)
+7. [Evaluation Results](#7-evaluation-results)
+   - [Results Storage](#results-storage)
+   - [CSV File Structure & Example](#csv-file-structure--example)
 
 ## 1. About The Project
 
@@ -234,3 +237,31 @@ sbatch job.sh
 ```
 
 *Note: You can open the `job.sh` file to view or modify its contents.*
+
+## 7. Evaluation Results
+
+After running the testing phase, the evaluation results will be automatically collected and saved.
+
+### Results Storage
+By default, the results are saved as a CSV file. You can find or change the target saving path via the `EXPERIMENT_RESULTS` macro inside the `job.py` file:
+```python
+EXPERIMENT_RESULTS = 'outputs/experiment_results.csv'
+```
+
+### CSV File Structure & Example
+
+The output file tracks performance across different models and dataset configurations. It records the following key metrics for each experiment:
+
+* `Model_Architecture`: The name of the neural network model.
+* `Dataset_Desc`: The configuration details of the dataset (Simulation Type | Cars Feature | City Map Type | Extra Samples).
+* `RMSE`: Root Mean Squared Error.
+* `NMSE`: Normalized Mean Squared Error.
+* `Time_Per_Sample_Sec`: Average inference time per single sample in seconds.
+* `Recording_Time`: The timestamp when the experiment finished.
+
+Here is an example of what the `experiment_results.csv` file looks like:
+
+| Model_Architecture | Dataset_Desc | RMSE | NMSE | Time_Per_Sample_Sec | Recording_Time |
+| --- | --- | --- | --- | --- | --- |
+| RadioUnet | DPM\|No_Cars_Exist\|Complete_City_Map\|Input_Samples_0 | 0.041216 | 0.031011 | 0.004236 | 2026-05-26 13:23:06 |
+| RadioWnet | IRT4_Adapter_300\|No_Cars_Exist\|Complete_City_Map\|Input_Samples_0 | 0.038896 | 0.027619 | 0.002645 | 2026-05-26 13:40:18 |

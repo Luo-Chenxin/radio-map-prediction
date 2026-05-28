@@ -151,3 +151,56 @@ radio-map-prediction/
 ### Configuration Validation
 
 You do not need to worry about making mistakes in the configuration file. The project includes a validation script at `src/utils/config.py`. When you start the program, it will automatically check your YAML configuration file. If there are conflicting or incorrect settings, the system will print a clear error message to remind you what to fix.
+
+## How to Run
+
+Currently, the project uses `job.py` as the main entry point. In the future, we plan to support command-line arguments (like `python main.py --config ... --mode ...`). For now, you can run the project locally or on the Telecom Paris cluster by following the steps below.
+
+### Run on a Local Machine
+
+Before running the code, make sure you have installed the conda environment as described in the [Environment Setup](#environment-setup) section.
+
+#### Step 1: Activate the Environment
+
+Open your terminal and activate the virtual environment:
+```bash
+conda activate rmp
+```
+
+#### Step 2: Set Your Mode and Config File
+
+Currently, you need to open `job.py` and manually change two variables in the code:
+
+1. **Config Path:** Find the configuration file path string and change it to the file you want to use (for example: `"config/radiounet_dpm_nocars_missing0_samples0.yaml"`).
+2. **Mode:** Find the `mode` variable and set it to:
+  * `'train'`: For running both training and testing.
+  * `'test'`: For running testing only.
+
+
+
+#### Step 3: Start the Program
+
+Run the following command:
+
+```bash
+python job.py
+
+```
+
+### Run on the Telecom Paris Cluster
+
+If you want to run your experiments on the **Telecom Paris cluster**, you can submit a batch job using Slurm.
+
+#### Step 1: Prepare Your Job Script
+
+The repository includes a cluster submission script named `job.sh`. Make sure you have already built your Apptainer image (`rmp_env.sif`) and uploaded it to your cluster workspace.
+
+#### Step 2: Submit the Job
+
+Use the `sbatch` command to submit `job.sh` to the cluster:
+
+```bash
+sbatch job.sh
+```
+
+*Note: You can open the `job.sh` file to view or modify its contents.*

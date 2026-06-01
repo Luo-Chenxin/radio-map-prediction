@@ -38,12 +38,19 @@ mkdir -p "${PROJ_DIR}/${TARGET_PKG_DIR}"
 
 # --- Dynamic Package Synchronization ---
 echo "Checking and synchronizing packages from environment.yml..."
+
 # Execute pip inside the active container environment
 # It parses environment.yml and safely installs new/missing upper-level libraries
 # note: core base packages (python, pip, pytorch, etc.) are strictly excluded to protect container stability
+PACKAGES=$(grep -E '^\s*-\s+' "${PROJ_DIR}/environment.yml" | \
+           sed 's/^[[:space:]]*-[[:space:]]*//' | \
+           sed 's/=/==/g' | \
+           grep -vE '^(python|pip|pytorch|torchvision|cuda|cudnn|conda)([=>=<[:space:]]|$)')
+
+echo "Installing verified packages: $PACKAGES"
+
 apptainer exec --nv --bind "${PROJ_DIR}":"${WORK_DIR}" --pwd "${WORK_DIR}" "${PROJ_DIR}/${IMAGE_NAME}" \
-    pip install -r <(grep -E '^\s*-\s+[a-zA-Z0-9_-]+' "${PROJ_DIR}/environment.yml" | sed 's/^[[:space:]]*-[[:space:]]*//' | grep -vE '^(python|pip|pytorch|torchvision|cuda.*|cudnn.*)$') \
-    --target="${WORK_DIR}/${TARGET_PKG_DIR}" --quiet --no-cache-dir
+    pip install $PACKAGES --target="${WORK_DIR}/${TARGET_PKG_DIR}" --quiet --no-cache-dir
 
 # --- Inject Container Environment Variables ---
 # Append the temp-packages directory to PYTHONPATH inside the container

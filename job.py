@@ -110,19 +110,19 @@ if __name__ == "__main__":
     # Mode 2: Training + Testing
     # ---------------------------------------------------------
     # 2.1 Train and Test RadioWnet (Load from frozen RadioUnet)
-    run_experiment(
-        config_path=CFG_WNET, 
-        model_class=RadioWnet, 
-        trainer_class=MaskedTrainer, 
-        pretrained_path=CKPT_UNET, # RadioUnet checkpoint
-        mode='train'
-    )
-
-    # 2.2 Train and Test RadioUnet from scratch
     # run_experiment(
-    #     config_path=CFG_UNET, 
-    #     model_class=RadioUnet, 
-    #     trainer_class=UnmaskedTrainer, 
-    #     pretrained_path=None,      # Train from scratch
+    #     config_path=CFG_WNET, 
+    #     model_class=RadioWnet, 
+    #     trainer_class=MaskedTrainer, 
+    #     pretrained_path=CKPT_UNET, # RadioUnet checkpoint
     #     mode='train'
     # )
+
+    # 2.2 Train and Test RadioUnet from scratch
+    run_experiment(
+        config_path=CFG_UNET, 
+        model_class=RadioUnet, 
+        trainer_class=UnmaskedTrainer, 
+        pretrained_path=None,      # Train from scratch
+        mode='train'
+    )

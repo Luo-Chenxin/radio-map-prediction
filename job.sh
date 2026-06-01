@@ -57,7 +57,7 @@ echo "Installing verified packages: "
 echo "$PACKAGES"
 
 apptainer exec --nv --bind "${PROJ_DIR}":"${WORK_DIR}" --pwd "${WORK_DIR}" "${PROJ_DIR}/${IMAGE_NAME}" \
-    pip install $PACKAGES --target="${WORK_DIR}/${TARGET_PKG_DIR}" --quiet --no-cache-dir
+    pip install $PACKAGES --target="${WORK_DIR}/${TARGET_PKG_DIR}" --upgrade-strategy only-if-needed --quiet --no-cache-dir
 
 # --- Inject Container Environment Variables ---
 # Append the temp-packages directory to PYTHONPATH inside the container

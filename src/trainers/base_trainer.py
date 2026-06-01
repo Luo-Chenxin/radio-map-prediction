@@ -219,11 +219,11 @@ class BaseTrainer:
 
             self.logger.info(f"Epoch {epoch+1} | Train Loss: {avg_train_loss:.4f} | Val Loss: {avg_val_loss:.4f}")
 
-            self.writer.add_scalar("loss/train_epoch", avg_train_loss, self.global_step)
-            self.writer.add_scalar("loss/val_epoch", avg_val_loss, self.global_step)
+            self.writer.add_scalar("loss/train_epoch", avg_train_loss, epoch)
+            self.writer.add_scalar("loss/val_epoch", avg_val_loss, epoch)
 
             current_lr = self.optimizer.param_groups[0]['lr']
-            self.writer.add_scalar("hyperparameter/lr", current_lr, self.global_step)
+            self.writer.add_scalar("hyperparameter/lr", current_lr, epoch)
 
             self.scheduler.step()
 

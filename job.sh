@@ -1,24 +1,57 @@
 #!/bin/bash
-#SBATCH --job-name=train_radio_unet_clean_DPM    # Job name
-#SBATCH --partition=3090                         # Requested compute partition
-#SBATCH --gres=gpu:1                             # Request 1 GPU
-#SBATCH --time=03:40:00                          # Maximum task runtime
-#SBATCH --output=outputs/%x_%j_out.log           # Standard output log (%x: job name | %j: job ID)
-#SBATCH --error=outputs/%x_%j_err.log            # Error log
+#SBATCH --job-name=train_radio_unet_clean_DPM     # Job name
+#SBATCH --partition=3090                          # Requested compute partition
+#SBATCH --gres=gpu:1                              # Request 1 GPU
+#SBATCH --time=03:40:00                           # Maximum task runtime
+#SBATCH --output=outputs/%x_%j_out.log            # Standard output log (%x: job name | %j: job ID)
+#SBATCH --error=outputs/%x_%j_err.log             # Error log
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=chenxin.luo@ip-paris.fr
 
-# Force the working directory to be the project root directory
-#SBATCH --chdir=/home/infres/cluo-25/radio-map-prediction 
+# ==============================================================================
+# PARAMETERS & PATHS CONFIGURATION
+# ==============================================================================
+# Define your project root directory on the cluster host machine
+PROJ_DIR="/home/infres/cluo-25/radio-map-prediction"
 
-# Make outputs directory
-mkdir -p outputs
+# Define your work directory in the container
+WORK_DIR="/workspace"
 
-# Load the Apptainer module
+# Define the local directory inside the project to cache patch packages
+TARGET_PKG_DIR=".temp/temp-packages"
+
+# Define the filename of your Apptainer image
+IMAGE_NAME="rmp_env.sif"
+
+# Force Slurm to change the working directory to the project root before execution
+#SBATCH --chdir=${PROJ_DIR} 
+
+# ==============================================================================
+# ENVIRONMENT & PRE-FLIGHT CHECKS
+# ==============================================================================
+# Load the Apptainer module on the cluster node
 module load apptainer
 
-# Training using Apptainer
-# --nv：Enable NVIDIA graphics card support
-# --bind：Mount the host machine's current directory (.) to the /workspace directory inside the container.
-apptainer exec --nv --bind .:/workspace --pwd /workspace rmp_env.sif \
+# Create required directories if they don't exist
+mkdir -p "${PROJ_DIR}/outputs"
+mkdir -p "${PROJ_DIR}/${TARGET_PKG_DIR}"
+
+# --- Dynamic Package Synchronization ---
+echo "Checking and synchronizing packages from environment.yml..."
+# Execute pip inside the active container environment
+# It parses environment.yml and safely installs new/missing upper-level libraries
+# note: core base packages (python, pip, pytorch, etc.) are strictly excluded to protect container stability
+apptainer exec --nv --bind "${PROJ_DIR}":"${WORK_DIR}" --pwd "${WORK_DIR}" "${PROJ_DIR}/${IMAGE_NAME}" \
+    pip install -r <(grep -E '^\s*-\s+[a-zA-Z0-9_-]+' "${PROJ_DIR}/environment.yml" | sed 's/^[[:space:]]*-[[:space:]]*//' | grep -vE '^(python|pip|pytorch|torchvision|cuda.*|cudnn.*)$') \
+    --target="${WORK_DIR}/${TARGET_PKG_DIR}" --quiet --no-cache-dir
+
+# --- Inject Container Environment Variables ---
+# Append the temp-packages directory to PYTHONPATH inside the container
+export APPTAINERENV_PYTHONPATH="$WORK_DIR/$TARGET_PKG_DIR:$PYTHONPATH"
+
+# ==============================================================================
+# MAIN EXECUTION
+# ==============================================================================
+echo "Starting the deep learning training..."
+apptainer exec --nv --bind "${PROJ_DIR}":"${WORK_DIR}" --pwd "${WORK_DIR}" "${PROJ_DIR}/${IMAGE_NAME}" \
     python job.py

@@ -42,12 +42,19 @@ echo "Checking and synchronizing packages from environment.yml..."
 # Execute pip inside the active container environment
 # It parses environment.yml and safely installs new/missing upper-level libraries
 # note: core base packages (python, pip, pytorch, etc.) are strictly excluded to protect container stability
-PACKAGES=$(grep -E '^\s*-\s+' "${PROJ_DIR}/environment.yml" | \
-           sed 's/^[[:space:]]*-[[:space:]]*//' | \
-           sed 's/=/==/g' | \
-           grep -vE '^(python|pip|pytorch|torchvision|cuda|cudnn|conda)([=>=<[:space:]]|$)')
+PACKAGES=$(awk '
+    /dependencies:/ {flag=1; next}   # See dependencies: Enable the capture switch
+    /^[a-zA-Z]/ {flag=0}             # If you encounter other words that are flush left (such as in a new area), turn off the switch.
+    flag && /^\s*-\s+/ {             # when the switch is on, and the current line is with a hyphen
+        sub(/^[[:space:]]*-[[:space:]]*/, ""); # Remove the leading hyphen and spaces.
+        print 
+    }
+' "${PROJ_DIR}/environment.yml" | \
+sed 's/=/==/g' | \
+grep -vE '^(python|pip|pytorch|torchvision|cuda|cudnn|conda)([=>=<[:space:]]|$)')
 
-echo "Installing verified packages: $PACKAGES"
+echo "Installing verified packages: "
+echo "$PACKAGES"
 
 apptainer exec --nv --bind "${PROJ_DIR}":"${WORK_DIR}" --pwd "${WORK_DIR}" "${PROJ_DIR}/${IMAGE_NAME}" \
     pip install $PACKAGES --target="${WORK_DIR}/${TARGET_PKG_DIR}" --quiet --no-cache-dir

@@ -2,6 +2,7 @@
 !.gitkeep
 
 outputs/
+.temp/
 
 __pycache__/
 *.py[cod]

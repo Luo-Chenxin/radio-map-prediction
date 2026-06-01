@@ -2,9 +2,13 @@ import torch
 import numpy as np
 import logging
 import time
+from datetime import datetime
 from tqdm import tqdm
 from pathlib import Path
 from src.trainers.early_stopping import EarlyStopping
+from torch.utils.tensorboard import SummaryWriter
+
+TB_STEP_INTERVAL = 10
 
 class BaseTrainer:
     def __init__(self, model, device, id, config):
@@ -15,9 +19,12 @@ class BaseTrainer:
         self.device = device
         self.id = id
         self.config = config
+        self.global_step = 0    # Track total training steps across epochs
+        self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         self._make_output_dir()
         self._set_logger()
+        self._set_tensorboard()
         self._set_criterion()
         self._set_optimizer()
         self._set_scheduler()
@@ -28,7 +35,10 @@ class BaseTrainer:
         self.out_dir = Path(self.config.out_dir)
         self.model_dir = self.out_dir / self.id
         self.model_dir.mkdir(parents=True, exist_ok=True)
-    
+
+        self.tb_dir = self.out_dir / self.id / self.timestamp
+        self.tb_dir.mkdir(parents=True, exist_ok=True)
+
     def _set_logger(self):
         """
         [Hook Function] Subclasses can override this method to set own logger function
@@ -45,6 +55,14 @@ class BaseTrainer:
             file_handler.setFormatter(formatter)
             self.logger.addHandler(file_handler)
             self.logger.propagate = False
+    
+    def _set_tensorboard(self):
+        """
+        Initialize TensorBoard SummaryWriter under self.tb_dir
+        """
+
+        # SummaryWriter takes a string path
+        self.writer = SummaryWriter(log_dir=str(self.tb_dir))
     
     def _set_criterion(self):
         """
@@ -125,6 +143,11 @@ class BaseTrainer:
             
             total_loss += loss.item()
             pbar.set_postfix({"avg_loss": f"{total_loss / (batch_idx + 1):.4f}"})
+
+            if self.global_step % TB_STEP_INTERVAL == 0:
+                self.writer.add_scalar("loss/train_step", loss.item(), self.global_step)
+            
+            self.global_step += 1
             
         return total_loss / len(loader)
 
@@ -196,13 +219,20 @@ class BaseTrainer:
 
             self.logger.info(f"Epoch {epoch+1} | Train Loss: {avg_train_loss:.4f} | Val Loss: {avg_val_loss:.4f}")
 
+            self.writer.add_scalar("loss/train_epoch", avg_train_loss, self.global_step)
+            self.writer.add_scalar("loss/val_epoch", avg_val_loss, self.global_step)
+
+            current_lr = self.optimizer.param_groups[0]['lr']
+            self.writer.add_scalar("hyperparameter/lr", current_lr, self.global_step)
+
             self.scheduler.step()
 
             self.early_stopping(avg_val_loss, self.model)
             if self.early_stopping.early_stop:
                 self.logger.info(f"Early stopping triggered at epoch {epoch+1}")
                 break
-
+        
+        self.writer.close()
         self.logger.info("Training Finish")
     
     @torch.no_grad()

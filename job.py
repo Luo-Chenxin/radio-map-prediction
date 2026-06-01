@@ -69,7 +69,12 @@ def run_experiment(config_path, model_class, trainer_class, pretrained_path=None
     metrics = trainer.test(test_loader)
     
     dataset_field = get_dataset_desc(config.data)
-    append_record(EXPERIMENT_RESULTS, model_class.__name__, dataset_field, metrics)
+    append_record(
+        file_path=EXPERIMENT_RESULTS, 
+        model_arch=model_class.__name__, 
+        dataset_desc=dataset_field, 
+        metrics=metrics,
+        timestamp=trainer.timestamp)
 
 
 if __name__ == "__main__":

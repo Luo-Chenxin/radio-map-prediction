@@ -17,9 +17,6 @@ PROJ_DIR="/home/infres/cluo-25/radio-map-prediction"
 # Define your work directory in the container
 WORK_DIR="/workspace"
 
-# Define the local directory inside the project to cache patch packages
-TARGET_PKG_DIR=".temp/temp-packages"
-
 # Define the filename of your Apptainer image
 IMAGE_NAME="rmp_env.sif"
 
@@ -34,32 +31,23 @@ module load apptainer
 
 # Create required directories if they don't exist
 mkdir -p "${PROJ_DIR}/outputs"
+
+# --- Optional: Install missing packages for older images ---
+# Execute pip inside the active container environment
+# This section only needs to be executed when using an older image.
+echo "Install missing packages..."
+
+# Define the local directory inside the project to cache patch packages
+TARGET_PKG_DIR=".temp/temp-packages"
+# Create required directories if they don't exist
 mkdir -p "${PROJ_DIR}/${TARGET_PKG_DIR}"
 
-# --- Dynamic Package Synchronization ---
-echo "Checking and synchronizing packages from environment.yml..."
-
-# Execute pip inside the active container environment
-# It parses environment.yml and safely installs new/missing upper-level libraries
-# note: core base packages (python, pip, pytorch, etc.) are strictly excluded to protect container stability
-PACKAGES=$(awk '
-    /dependencies:/ {flag=1; next}   # See dependencies: Enable the capture switch
-    /^[a-zA-Z]/ {flag=0}             # If you encounter other words that are flush left (such as in a new area), turn off the switch.
-    flag && /^\s*-\s+/ {             # when the switch is on, and the current line is with a hyphen
-        sub(/^[[:space:]]*-[[:space:]]*/, ""); # Remove the leading hyphen and spaces.
-        print 
-    }
-' "${PROJ_DIR}/environment.yml" | \
-sed 's/=/==/g' | \
-grep -vE '^(python|pip|pytorch|torchvision|cuda|cudnn|conda)([=>=<[:space:]]|$)')
-
+PACKAGES='tensorboard'
 echo "Installing verified packages: "
 echo "$PACKAGES"
-
 apptainer exec --nv --bind "${PROJ_DIR}":"${WORK_DIR}" --pwd "${WORK_DIR}" "${PROJ_DIR}/${IMAGE_NAME}" \
     pip install $PACKAGES --target="${WORK_DIR}/${TARGET_PKG_DIR}" --upgrade-strategy only-if-needed --quiet --no-cache-dir
 
-# --- Inject Container Environment Variables ---
 # Append the temp-packages directory to PYTHONPATH inside the container
 export APPTAINERENV_PYTHONPATH="$WORK_DIR/$TARGET_PKG_DIR:$PYTHONPATH"
 

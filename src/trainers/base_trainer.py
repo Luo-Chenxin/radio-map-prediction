@@ -209,6 +209,7 @@ class BaseTrainer:
         [Main Loop] The master switch that starts training
         """
         self.logger.info(f"Start Training... | Device: {self.device}")
+        history = []
 
         for epoch in range(self.config.epoch):
 
@@ -218,6 +219,11 @@ class BaseTrainer:
             avg_val_loss = self._validate_one_epoch(val_loader)
 
             self.logger.info(f"Epoch {epoch+1} | Train Loss: {avg_train_loss:.4f} | Val Loss: {avg_val_loss:.4f}")
+            history.append({
+                "epoch": epoch + 1,
+                "train_loss": avg_train_loss,
+                "val_loss": avg_val_loss,
+            })
 
             self.writer.add_scalar("loss/train_epoch", avg_train_loss, epoch)
             self.writer.add_scalar("loss/val_epoch", avg_val_loss, epoch)
@@ -234,6 +240,7 @@ class BaseTrainer:
         
         self.writer.close()
         self.logger.info("Training Finish")
+        return history
     
     @torch.no_grad()
     def test(self, test_loader):

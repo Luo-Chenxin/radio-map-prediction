@@ -8,5 +8,7 @@ dependencies:
   - pyyaml
   - pydantic
   - numpy
+  - h5py
+  - matplotlib
   - torchvision
   - tensorboard

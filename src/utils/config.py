@@ -92,6 +92,15 @@ class _Config(BaseModel):
     train: _TrainConfig 
     data: _DataConfig
 
+class _ParisDataConfig(BaseModel):
+    h5_path: str
+
+class _ParisConfig(BaseModel):
+    seed: int = Field(ge=0, description="Seed needs to be greater than 0")
+    load: _LoadConfig
+    train: _TrainConfig
+    data: _ParisDataConfig
+
 def load_config_strict(config_path):
     """
     Load, check and return the contents of the YAML configuration file.
@@ -100,4 +109,11 @@ def load_config_strict(config_path):
         raw_config = yaml.safe_load(f)
     
     config = _Config(**raw_config) 
+    return config
+
+def load_paris_config_strict(config_path):
+    with config_path.open(mode='r', encoding='utf-8') as f:
+        raw_config = yaml.safe_load(f)
+
+    config = _ParisConfig(**raw_config)
     return config

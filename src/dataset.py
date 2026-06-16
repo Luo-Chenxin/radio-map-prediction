@@ -1,4 +1,5 @@
 from pathlib import Path
+import h5py
 import numpy as np
 import torch
 from torch.utils.data import Dataset
@@ -126,3 +127,40 @@ class RadioSeerDataset(Dataset):
         samples_gain[selected_h_coords, selected_w_coords] = gain[0, selected_h_coords, selected_w_coords]
 
         return samples_gain
+
+class ParisH5Dataset(Dataset):
+    def __init__(self, h5_path):
+        self.h5_path = Path(h5_path)
+        self.h5_file = None
+
+        with h5py.File(self.h5_path, 'r') as h5_file:
+            self.dataset_size = len(h5_file['radiomap'])
+            expected_shape = h5_file['radiomap'].shape
+            if h5_file['buildings'].shape != expected_shape or h5_file['transmitters'].shape != expected_shape:
+                raise ValueError("Paris H5 datasets must have matching shapes")
+
+    def __len__(self):
+        return self.dataset_size
+
+    def __getitem__(self, idx):
+        h5_file = self._get_h5_file()
+        buildings = torch.from_numpy(h5_file['buildings'][idx].astype(np.float32))
+        transmitters = torch.from_numpy(h5_file['transmitters'][idx].astype(np.float32))
+        radiomap = torch.from_numpy(h5_file['radiomap'][idx].astype(np.float32))
+
+        inputs = torch.stack([transmitters, buildings], dim=0)
+        return inputs, radiomap.unsqueeze(0)
+
+    def _get_h5_file(self):
+        if self.h5_file is None:
+            self.h5_file = h5py.File(self.h5_path, 'r')
+        return self.h5_file
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state['h5_file'] = None
+        return state
+
+    def __del__(self):
+        if self.h5_file is not None:
+            self.h5_file.close()

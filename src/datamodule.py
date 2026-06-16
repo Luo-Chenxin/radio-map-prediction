@@ -67,3 +67,42 @@ class RadioSeerDataModule:
         self.test_dataset, 
         batch_size=self.config.test_batch_size,
         num_workers=self.config.num_workers)
+
+class ParisDataModule:
+    def __init__(self, dataset_class, h5_path, config_load, seed):
+        self.config = config_load
+        dataset = dataset_class(h5_path)
+        total_size = len(dataset)
+        train_size = int(config_load.train_ratio * total_size)
+        val_size = int(config_load.val_ratio * total_size)
+
+        g = torch.Generator().manual_seed(seed)
+        shuffled_indices = torch.randperm(total_size, generator=g).tolist()
+        self.split_indices = {
+            'train': shuffled_indices[:train_size],
+            'valid': shuffled_indices[train_size:train_size + val_size],
+            'test': shuffled_indices[train_size + val_size:],
+        }
+
+        self.train_dataset = Subset(dataset, self.split_indices['train'])
+        self.val_dataset = Subset(dataset, self.split_indices['valid'])
+        self.test_dataset = Subset(dataset, self.split_indices['test'])
+
+    def get_train_dataloader(self):
+        return DataLoader(
+            self.train_dataset,
+            batch_size=self.config.train_batch_size,
+            shuffle=True,
+            num_workers=self.config.num_workers)
+
+    def get_val_dataloader(self):
+        return DataLoader(
+            self.val_dataset,
+            batch_size=self.config.val_batch_size,
+            num_workers=self.config.num_workers)
+
+    def get_test_dataloader(self):
+        return DataLoader(
+            self.test_dataset,
+            batch_size=self.config.test_batch_size,
+            num_workers=self.config.num_workers)

@@ -4,21 +4,20 @@ A deep learning benchmark repository for evaluating and comparing different netw
 
 ## Table of Contents
 1. [About The Project](#1-about-the-project)
-2. [Roadmap / TODO List](#2-roadmap--todo-list)
-3. [Environment Setup](#3-environment-setup)
+2. [Environment Setup](#2-environment-setup)
    - [Option A: Local Setup (Conda)](#option-a-local-setup-conda)
    - [Option B: Cluster Setup (Apptainer / Singularity)](#option-b-cluster-setup-apptainer--singularity)
-4. [Data Preparation](#4-data-preparation)
+3. [Data Preparation](#3-data-preparation)
    - [Download Data](#download-data)
    - [Directory Structure](#directory-structure)
-5. [Configuration Guide](#5-configuration-guide)
+4. [Configuration Guide](#4-configuration-guide)
    - [Configuration Files Management](#configuration-files-management)
    - [Key Parameter Groups](#key-parameter-groups)
    - [Configuration Validation](#configuration-validation)
-6. [How to Run](#6-how-to-run)
+5. [How to Run](#5-how-to-run)
    - [Run on a Local Machine](#run-on-a-local-machine)
    - [Run on the Telecom Paris Cluster](#run-on-the-telecom-paris-cluster)
-7. [Evaluation Results](#7-evaluation-results)
+6. [Evaluation Results](#6-evaluation-results)
    - [Results Storage](#results-storage)
    - [CSV File Structure & Example](#csv-file-structure--example)
 
@@ -47,18 +46,7 @@ Compared to the original RadioUNet repository, we made several important updates
 * **Cars Information:** In original project, we've already known that cars presence affects model performance. So, in this project, if cars exist in the simulation, the cars' data will be fed into the model as an extra feature channel. You can turn this on or off in the configuration file using `cars_exist: true/false`.
 * **Accurate Inference Timing:** We added `torch.cuda.synchronize()` for GPU devices. This ensures that the recorded inference time is precise when running on CUDA. (The code still supports running on CPU).
 
-## 2. Roadmap / TODO List
-
-Here are the planned features and updates for this project. Feel free to open an issue if you want to contribute!
-
-* **Configuration & CLI Improvements**
-  - [ ] Move model architecture switching from hard-coded Python variables into the configuration file.
-  - [ ] Add command-line arguments (CLI) support (e.g., `python main.py --config config/config.yaml --mode train`).
-
-* **Model Architectures Exploration**
-  - [ ] Integrate **Transformer-based** architectures for radio map prediction.
-
-## 3. Environment Setup
+## 2. Environment Setup
 
 You can set up the running environment in two ways: using Conda (for local/GPU/CPU runs) or using Apptainer (for the Telecom Paris cluster).
 
@@ -86,18 +74,28 @@ Use the standard command to build the image locally:
 apptainer build rmp_env.sif rmp_env.def
 ```
 
-## 4. Data Preparation
+## 3. Data Preparation
 
 ### Download Data
+
+#### RadioMapSeer
+
+This is the classic and benchmark radio map dataset, and used in original code respository.
 
 You can find the download links and dataset information here:
 
 * **Dataset Download:** [RadioMapSeer Dataset](https://radiomapseer.github.io/)
 * **More Information & Tips:** [RadioUNet Reproduction Tips](https://my-website-five-gray-23.vercel.app/docs/radiounet#reproduction-tips)
 
+#### H5Dataset
+
+See details in project [`Sionna Simulation`](https://github.com/Luo-Chenxin/sionna_simulation)
+
 ### Directory Structure
 
-After downloading the dataset, please extract the files. We recommend placing the extracted folders directly inside a directory named `data` in the project root folder.
+#### RadioMapSeer
+
+After downloading the `RadioMapSeer` dataset, please extract the files. We recommend placing the extracted folders directly inside a directory named `data` in the project root folder.
 
 Your project directory should look like this:
 
@@ -116,13 +114,29 @@ radio-map-prediction/
 
 ```
 
+#### H5 Dataset
+
+This dataset generally consist of a single file `block.h5`; it is recommended to place it in the `data` folder.
+
+```text
+radio-map-prediction/
+├── config
+├── data/
+│   └── block.h5
+├── src
+├── .env
+└── ... (other files)
+```
+
 *Note: Please check your configuration file to ensure the data paths match this structure.*
 
-## 5. Configuration Guide
+## 4. Configuration Guide
 
 All parameters for training, testing, and data processing are managed in YAML configuration files.
 
 ### Configuration Files Management
+
+#### RadioMapSeer
 
 We recommend putting all your configuration files inside the `config/` folder. To keep things organized, please name your configuration files using this clear format:
 `{architecture}_{simulation_type}_{cars}_{map_type}_{samples}.yaml`
@@ -138,7 +152,11 @@ radio-map-prediction/
 └── ... (other directories and files)
 ```
 
-> **Note on Model Architecture Switching:** Currently, changing the network architecture is still hard-coded. You need to change the model class manually in the main entry `job.py` file. In the future, we plan to update the code so you can switch architectures directly inside the configuration file.
+#### H5 Datset
+
+This format is recommended as filename: `{architecture}_h5.yaml`
+
+> **Note on Model Architecture Switching:** Currently, changing the network architecture is still hard-coded. You need to change the model class manually in the main entry `job.py` file.
 
 ### Key Parameter Groups
 
@@ -165,6 +183,10 @@ radio-map-prediction/
 
 #### 4. Data Configuration (`data:`)
 
+* `type`: The type of the dataset.
+
+##### RadioSeerMap
+
 * **Directory Paths:**
   * `root_dir`: The root folder of the dataset.
   * `DPM_dir` / `DPM_cars_dir` / `IRT2_dir` / `IRT2_cars_dir` / `IRT4_dir` / `IRT4_cars_dir`: Directories containing simulation gain data with or without cars.
@@ -185,13 +207,18 @@ radio-map-prediction/
   * `threshold`: Pathloss threshold filter value (Range: `[0, 1)`).
   * `img_size`: The resolution of input images, default is `[256, 256]`.
 
+##### RadioSeerMap
+
+* `h5_path`: The file path of the dataset
+* `threshold`: Pathloss threshold filter value (Range: `[0, 1)`).
+
 ### Configuration Validation
 
 You do not need to worry about making mistakes in the configuration file. The project includes a validation script at `src/utils/config.py`. When you start the program, it will automatically check your YAML configuration file. If there are conflicting or incorrect settings, the system will print a clear error message to remind you what to fix.
 
-## 6. How to Run
+## 5. How to Run
 
-Currently, the project uses `job.py` as the main entry point. In the future, we plan to support command-line arguments (like `python main.py --config ... --mode ...`). For now, you can run the project locally or on the Telecom Paris cluster by following the steps below.
+Currently, the project uses `job.py` as the main entry point. You can run the project locally or on the LTCI cluster by following the steps below.
 
 ### Run on a Local Machine
 
@@ -220,7 +247,7 @@ Run the following command:
 python job.py
 ```
 
-### Run on the Telecom Paris Cluster
+### Run on the LTCI Cluster
 
 If you want to run your experiments on the **Telecom Paris cluster**, you can submit a batch job using Slurm.
 
@@ -238,7 +265,7 @@ sbatch job.sh
 
 *Note: You can open the `job.sh` file to view or modify its contents.*
 
-## 7. Evaluation Results
+## 6. Evaluation Results
 
 After running the testing phase, the evaluation results will be automatically collected and saved.
 
@@ -253,7 +280,7 @@ EXPERIMENT_RESULTS = 'outputs/experiment_results.csv'
 The output file tracks performance across different models and dataset configurations. It records the following key metrics for each experiment:
 
 * `Model_Architecture`: The name of the neural network model.
-* `Dataset_Desc`: The configuration details of the dataset (Simulation Type | Cars Feature | City Map Type | Extra Samples).
+* `Dataset_Desc`: The configuration details of the dataset (For `RadioMapSeer`: Simulation Type | Cars Feature | City Map Type | Extra Samples).
 * `RMSE`: Root Mean Squared Error.
 * `NMSE`: Normalized Mean Squared Error.
 * `Time_Per_Sample_Sec`: Average inference time per single sample in seconds.

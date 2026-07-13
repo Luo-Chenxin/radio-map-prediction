@@ -1,35 +1,10 @@
 from pathlib import Path
 import csv
 
-def get_radiounet_model(config, model_class):
-    in_channels = 1 + 1
-    if config.samples_number > 0:
-        in_channels = in_channels + 1
-    if config.cars_exist:
-        in_channels = in_channels + 1
-    
+def get_radiounet_model(config_data, model_class):
+    in_channels = config_data.get_in_channels()
     first_out_channels = 6 if in_channels <= 3 else 10
     return model_class(in_channels, first_out_channels)
-
-
-def get_dataset_desc(config) -> str:
-    """
-    Get dataset description for append_record function
-    """
-    simulationStr = config.simulation if config.sparse_IRT4_number == 0 else f"IRT4_Adapter_{config.sparse_IRT4_number}" 
-    carsStr = "Cars_Exist" if config.cars_exist else "No_Cars_Exist"
-    if config.city_map == 'complete':
-        cityMapStr = 'Complete_City_Map'
-    elif config.city_map == 'missing':
-        cityMapStr = f'City_Map_With_{config.missing}_Missing_Buildings'
-    elif config.city_map == 'rand':
-        cityMapStr = 'City_Map_With_Random_Missing_Buildings'
-    else: 
-        cityMapStr = f'Unknown_{config.city_map}'
-    samplesStr = f"Input_Samples_{config.samples_number}"
-
-    return f"{simulationStr}|{carsStr}|{cityMapStr}|{samplesStr}"
-
 
 def append_record(file_path, model_arch, dataset_desc, metrics, timestamp):
     """

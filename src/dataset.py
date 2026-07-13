@@ -128,10 +128,11 @@ class RadioSeerDataset(Dataset):
 
         return samples_gain
 
-class ParisH5Dataset(Dataset):
-    def __init__(self, h5_path):
-        self.h5_path = Path(h5_path)
+class H5Dataset(Dataset):
+    def __init__(self, config, seed=None, is_test=False):
+        self.h5_path = Path(config.h5_path)
         self.h5_file = None
+        self.thr = config.threshold
 
         with h5py.File(self.h5_path, 'r') as h5_file:
             self.dataset_size = len(h5_file['radiomap'])
@@ -149,7 +150,13 @@ class ParisH5Dataset(Dataset):
         radiomap = torch.from_numpy(h5_file['radiomap'][idx].astype(np.float32))
 
         inputs = torch.stack([transmitters, buildings], dim=0)
-        return inputs, radiomap.unsqueeze(0)
+        target = self._get_target(radiomap)
+        return inputs, target
+    
+    def _get_target(self, radiomap):
+        thr = self.thr
+        target = (torch.clip(radiomap, min=thr) - thr) / (1 - thr)
+        return target.unsqueeze(0)
 
     def _get_h5_file(self):
         if self.h5_file is None:

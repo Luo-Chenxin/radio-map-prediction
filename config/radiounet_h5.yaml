@@ -20,4 +20,6 @@ train:
   out_dir: "outputs"
 
 data:
-  h5_path: "dataset_paris/block_normalized.h5"
+  type: 'h5'                                     # Distinguish from other datasets
+  h5_path: "data/block.h5"   # Dataset File Path
+  threshold: 0                                 # RSS threshold; the range is [0, 1)

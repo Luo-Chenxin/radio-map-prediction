@@ -1,7 +1,9 @@
 import yaml
 from pydantic import BaseModel, ValidationError, Field, model_validator
-from typing import Tuple
+from typing import Tuple, Literal, Union, Annotated
 from typing_extensions import Self
+from src.datamodule import RadioSeerDataModule, H5DataModule
+from src.dataset import RadioSeerDataset, H5Dataset
 
 class _LoadConfig(BaseModel):
     train_ratio: float = Field(gt=0.0, lt=1.0, description="Range is (0.0, 1.0)")
@@ -34,7 +36,8 @@ class _TrainConfig(BaseModel):
 
 _ImgSize = Tuple[int, int]
 
-class _DataConfig(BaseModel):
+class _RadioMapSeerDataConfig(BaseModel):
+    type: Literal["radiomapseer"] = "radiomapseer"
     root_dir: str
     DPM_dir: str
     DPM_cars_dir: str
@@ -86,20 +89,65 @@ class _DataConfig(BaseModel):
     threshold: float = Field(ge=0.0, lt=1.0, description="Range is [0, 1]")
     img_size: _ImgSize
 
+    def get_desc(self) -> str:
+        """
+        Get description of dataset
+        """
+        simulationStr = self.simulation if self.sparse_IRT4_number == 0 else f"IRT4_Adapter_{self.sparse_IRT4_number}" 
+        carsStr = "Cars_Exist" if self.cars_exist else "No_Cars_Exist"
+        if self.city_map == 'complete':
+            cityMapStr = 'Complete_City_Map'
+        elif self.city_map == 'missing':
+            cityMapStr = f'City_Map_With_{self.missing}_Missing_Buildings'
+        elif self.city_map == 'rand':
+            cityMapStr = 'City_Map_With_Random_Missing_Buildings'
+        else: 
+            cityMapStr = f'Unknown_{self.city_map}'
+        samplesStr = f"Input_Samples_{self.samples_number}"
+
+        return f"{simulationStr}|{carsStr}|{cityMapStr}|{samplesStr}"
+    
+    def build_datamodule(self, config_load, seed):
+        return RadioSeerDataModule(RadioSeerDataset, config_load, self, seed)
+    
+    def get_in_channels(self) -> int:
+        in_channels = 1 + 1  # buildings + transmitters
+        if self.samples_number > 0:
+            in_channels += 1
+        if self.cars_exist:
+            in_channels += 1
+        return in_channels
+
+class _H5DataConfig(BaseModel):
+    type: Literal["h5"] = "h5"
+    h5_path: str
+    threshold: float = Field(ge=0.0, lt=1.0, description="Range is [0, 1]")
+    
+    def get_desc(self) -> str:
+        return self.h5_path
+    
+    def build_datamodule(self, config_load, seed):
+        return H5DataModule(H5Dataset, config_load, self, seed)
+    
+    def get_in_channels(self) -> int:
+        return 2
+
+_DataConfig = Annotated[
+    Union[_RadioMapSeerDataConfig, _H5DataConfig],
+    Field(discriminator="type"),
+]
+
 class _Config(BaseModel):
     seed: int = Field(ge=0, description="Seed needs to be greater than 0")
     load: _LoadConfig
     train: _TrainConfig 
-    data: _DataConfig
+    data: _DataConfig 
 
-class _ParisDataConfig(BaseModel):
-    h5_path: str
+    def build_datamodule(self):
+        return self.data.build_datamodule(self.load, self.seed)
 
-class _ParisConfig(BaseModel):
-    seed: int = Field(ge=0, description="Seed needs to be greater than 0")
-    load: _LoadConfig
-    train: _TrainConfig
-    data: _ParisDataConfig
+    def dataset_desc(self) -> str:
+        return self.data.get_desc()
 
 def load_config_strict(config_path):
     """
@@ -109,11 +157,4 @@ def load_config_strict(config_path):
         raw_config = yaml.safe_load(f)
     
     config = _Config(**raw_config) 
-    return config
-
-def load_paris_config_strict(config_path):
-    with config_path.open(mode='r', encoding='utf-8') as f:
-        raw_config = yaml.safe_load(f)
-
-    config = _ParisConfig(**raw_config)
     return config

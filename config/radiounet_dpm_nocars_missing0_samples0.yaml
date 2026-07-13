@@ -21,6 +21,7 @@ train:
 
 # Data-related configuration
 data:
+  type: 'radiomapseer'                    # Distinguish from other datasets
   root_dir: "data"                        # Dataset root directory
   DPM_dir: "gain/DPM"                     # Dataset DPM simulation directory, and it simulated without cars
   DPM_cars_dir: "gain/carsDPM"            # Dataset DPM simulation directory, and it simulated with cars

@@ -4,7 +4,7 @@ from src.dataset import RadioSeerDataset
 from src.datamodule import RadioSeerDataModule 
 from src.models.radio_unet import RadioUnet, RadioWnet
 from src.utils.config import load_config_strict
-from src.utils.utils import get_radiounet_model, get_dataset_desc, append_record
+from src.utils.utils import get_radiounet_model, append_record
 from src.trainers.unmasked_trainer import UnmaskedTrainer
 from src.trainers.masked_trainer import MaskedTrainer
 
@@ -27,7 +27,7 @@ def run_experiment(config_path, model_class, trainer_class, pretrained_path=None
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # 1. Initialize data
-    datamodule = RadioSeerDataModule(RadioSeerDataset, config.load, config.data, config.seed)
+    datamodule = config.build_datamodule()
     
     # 2. Initialize the model
     model = get_radiounet_model(config.data, model_class)
@@ -68,7 +68,7 @@ def run_experiment(config_path, model_class, trainer_class, pretrained_path=None
     test_loader = datamodule.get_test_dataloader()
     metrics = trainer.test(test_loader)
     
-    dataset_field = get_dataset_desc(config.data)
+    dataset_field = config.dataset_desc()
     append_record(
         file_path=EXPERIMENT_RESULTS, 
         model_arch=model_class.__name__, 
@@ -80,6 +80,7 @@ def run_experiment(config_path, model_class, trainer_class, pretrained_path=None
 if __name__ == "__main__":
     # Define configuration and checkpoint paths
     CFG_UNET = 'config/radiounet_dpm_nocars_missing0_samples0.yaml'
+    CFG_UNET_H5 = 'config/radiounet_h5.yaml' 
     CFG_WNET = 'config/radiownet_dpm_nocars_missing0_samples0.yaml'
     
     CKPT_UNET = 'outputs/radiounet_dpm_nocars_missing0_samples0/best_model.pt'
@@ -118,9 +119,18 @@ if __name__ == "__main__":
     #     mode='train'
     # )
 
-    # 2.2 Train and Test RadioUnet from scratch
+    # 2.2.1 Train and Test RadioUnet from scratch
+    # run_experiment(
+    #     config_path=CFG_UNET, 
+    #     model_class=RadioUnet, 
+    #     trainer_class=UnmaskedTrainer, 
+    #     pretrained_path=None,      # Train from scratch
+    #     mode='train'
+    # )
+
+    # 2.2.2 Train and Test RadioUnet from scratch on H5Dataset
     run_experiment(
-        config_path=CFG_UNET, 
+        config_path=CFG_UNET_H5, 
         model_class=RadioUnet, 
         trainer_class=UnmaskedTrainer, 
         pretrained_path=None,      # Train from scratch
